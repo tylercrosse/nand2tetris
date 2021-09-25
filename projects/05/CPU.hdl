@@ -92,4 +92,38 @@ CHIP CPU {
     // Dest - the C-instruction bit 3 controls the D-reg dest 1xxaccccccdddjjj
     // if (instruction[3] === true) also store comp in the currently selected memory register
     And(a=Cinstruction, b=instruction[3], out=writeM);
+    
+    /**
+     * Jump - the C-instruction bits 2 - 0 control the jump 1xxaccccccdddjjj
+     * 
+     * jump | j j j | Effect:
+     * null | 0 0 0 | no jump
+     *  JGT | 0 0 1 | if comp > 0 jump
+     *  JEQ | 0 1 0 | if comp = 0 jump
+     *  JGE | 0 1 1 | if comp >= 0 jump
+     *  JLT | 1 0 0 | if comp < 0 jump
+     *  JNE | 1 0 1 | if comp != 0 jump
+     *  JLE | 1 1 0 | if comp <= 0 jump
+     *  JMP | 1 1 1 | unconditional jump
+     */
+    And(a=ZRout, b=instruction[1], out=jeq);    // is zero and jump if zero
+    And(a=NGout, b=instruction[2], out=jlt);    // is neg and jump if neg
+    Or(a=ZRout, b=NGout, out=zeroOrNeg);
+    Not(in=zeroOrNeg, out=positive);            // is positive (not zero and not neg)
+    And(a=positive, b=instruction[0], out=jgt); // is pos and jump if pos
+    Or(a=jeq, b=jlt, out=jle);
+    Or(a=jle, b=jgt, out=jumpToA);              // load PC if cond met and jump if cond
+    
+    /**
+     * Program Counter - emits the address of the next instruction:
+     * To start / restart the program's execution PC = 0
+     * no jump: PC++
+     * goto: PC = A
+     * conditional goto: if the condition is true PC = A else PC++
+     */
+    And(a=Cinstruction, b=jumpToA, out=PCload); // Only jump if C instruction
+    // calc PCload & PCinc - whether to load PC with A reg
+    Not(in=PCload, out=PCinc);                  // only inc if not load
+    
+    PC(in=Aout, inc=PCinc, load=PCload, reset=reset, out[0..14]=pc);
 }
