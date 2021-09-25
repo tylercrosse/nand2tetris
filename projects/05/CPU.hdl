@@ -88,4 +88,8 @@ CHIP CPU {
     ALU(x=Dout, y=AMout, 
         zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], 
         out=ALUout, out=outM, zr=ZRout, ng=NGout);
+
+    // Dest - the C-instruction bit 3 controls the D-reg dest 1xxaccccccdddjjj
+    // if (instruction[3] === true) also store comp in the currently selected memory register
+    And(a=Cinstruction, b=instruction[3], out=writeM);
 }
