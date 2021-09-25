@@ -23,6 +23,29 @@
  * to their new values only in the next time step. If reset==1 then the 
  * CPU jumps to address 0 (i.e. pc is set to 0 in next time step) rather 
  * than to the address resulting from executing the current instruction. 
+ * Figure 4.5 is helpful.
+ *
+ *      = A-instruction =
+ * Symbolic: @xxx             (xxx is a decimal value ranging from 0 to 32767,
+                               or a symbol bound to such a decimal value)
+ * Binary:   0vvvvvvvvvvvvvvv (vv ... v = 15-bit value of xxx)
+ *
+ *      = C-instruction =
+ * Symbolic: dest = comp; jump
+ *            (comp is manadtory. 
+ *             If dest is empty, the = is omitted;
+ *             If jump is empty, the ; is omitted)
+ * Binary:   1xxaccccccdddjjj
+ * 
+ * dest | d d d | Effect: store comp in:
+ * null | 0 0 0 | the value is not stored
+ *   M  | 0 0 1 | RAM[A]
+ *   D  | 0 1 0 | D register (reg)
+ *  DM  | 0 1 1 | D reg and RAM[A]
+ *   A  | 1 0 0 | A reg
+ *  AM  | 1 0 1 | A reg and RAM[A]
+ *  AD  | 1 1 0 | A reg and D reg
+ *  ADM | 1 1 1 | A reg, D reg, and RAM[A]
  */
 
 CHIP CPU {
@@ -39,5 +62,30 @@ CHIP CPU {
         pc[15];          // address of next instruction
 
     PARTS:
-    // Put your code here:
+    // Instruction Decoding - check the op-code!
+    // A-instruction when the leftmost bit is 0 - else C-instruction
+    Not(in=instruction[15], out=Ainstruction);
+    Not(in=Ainstruction, out=Cinstruction);
+
+    // Dest - the C-instruction bit 5 controls the A-reg dest 1xxaccccccdddjjj
+    // if (instruction[5] === true) also store comp in A-reg
+    And(a=Cinstruction, b=instruction[5], out=ALUtoA);
+    Mux16(a=instruction, b=ALUout, sel=ALUtoA, out=AregIn);
+
+    // Load A if A-instruction or the C-instruction bit 5 goes to A-reg
+    Or(a=Ainstruction, b=ALUtoA, out=loadA);
+    ARegister(in=AregIn, load=loadA, out=Aout, out[0..14]=addressM);
+
+    // inM - the C-instruction bit 12 selects A or M 1xxaccccccdddjjj
+    Mux16(a=Aout, b=inM, sel=instruction[12], out=AMout);
+    
+    // Dest - the C-instruction bit 4 controls the D-reg dest 1xxaccccccdddjjj
+    // if (instruction[4] === true) also store comp in D-reg
+    And(a=Cinstruction, b=instruction[4], out=loadD);
+    DRegister(in=ALUout, load=loadD, out=Dout);
+    
+    // Comp - the C-instruction bits 11 - 6 control the alu 1xxaccccccdddjjj
+    ALU(x=Dout, y=AMout, 
+        zx=instruction[11], nx=instruction[10], zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6], 
+        out=ALUout, out=outM, zr=ZRout, ng=NGout);
 }

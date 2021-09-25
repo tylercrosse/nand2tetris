@@ -19,7 +19,13 @@
  * the range 0x4000-0x5FFF results in accessing the screen memory 
  * map. Access to address 0x6000 results in accessing the keyboard 
  * memory map. The behavior in these addresses is described in the 
- * Screen and Keyboard chip specifications given in the book.
+ * Screen and Keyboard chip specifications given in the book. *Figure 5.6*
+ *
+ * Memory   - 0x0000 or 0b000000000000000 or 0
+ *            0x3FFF or 0b011111111111111 or 16383
+ * Screen   - 0x4000 or 0b100000000000000 or 16384
+ *            0x5FFF or 0b101111111111111 or 24575
+ * Keyboard - 0x6000 or 0b110000000000000 or 24576
  */
 
 CHIP Memory {
@@ -27,5 +33,27 @@ CHIP Memory {
     OUT out[16];
 
     PARTS:
-    // Put your code here:
+    /**
+     * 4-way demultiplexor.
+     * {a,b,c,d} = {in,0,0,0} if sel==00
+     *             {0,in,0,0} if sel==01
+     *             {0,0,in,0} if sel==10
+     *             {0,0,0,in} if sel==11
+     */
+	DMux4Way(in=load, sel=address[13..14], a=loadram1, b=loadram2, c=loadscreen, d=loadkbd);
+    // combine the two ram sections
+	Or(a=loadram1, b=loadram2, out=loadram);
+    
+    RAM16K(in=in, load=loadram, address=address[0..13], out=ramout);
+    Screen(in=in, load=loadscreen, address=address[0..12], out=scrout);
+    Keyboard(out=kbout);
+    
+    /**
+      * 4-way 16-bit multiplexor.
+      * out = a if sel==00
+      *       b if sel==01
+      *       c if sel==10
+      *       d if sel==11
+      */
+    Mux4Way16(a=ramout, b=ramout, c=scrout, d=kbout, sel=address[13..14], out=out);
 }

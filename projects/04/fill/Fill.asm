@@ -32,7 +32,7 @@
   0;JMP
 
 (BLACK)
-  @SCREEN //loads the screen's first address - 16384 (0x4000)
+  @SCREEN //loads the screen's first address - 16384 (ob100000000000000 0x4000)
   D=A
   @i
   A=D+M // adds the current index to the screen's first address in order to color the current set of 16 pixels
