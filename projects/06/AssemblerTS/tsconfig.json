@@ -1,6 +1,7 @@
 {
   "compilerOptions": {
-    "module": "system",
+    "module": "commonjs",
+    "target": "es2019",
     "noImplicitAny": true,
     "preserveConstEnums": true,
     "outDir": "dist",
