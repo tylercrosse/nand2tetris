@@ -70,6 +70,13 @@ describe("Parser", () => {
   it("cInstruction - should determine the C-instruction binary", () => {
     const parser = new Parser('');
 
+    expect(parser.aInstruction('0')).toEqual('0000000000000000');
+    expect(parser.aInstruction('42')).toEqual('0000000000101010');
+  });
+
+  it("cInstruction - should determine the C-instruction binary", () => {
+    const parser = new Parser('');
+
     expect(parser.cInstruction("D=A")).toEqual("1110110000010000");
     expect(parser.cInstruction("AD=A-D")).toEqual("1110000111110000");
     expect(parser.cInstruction("D=;JGT")).toEqual("1110000000010001");

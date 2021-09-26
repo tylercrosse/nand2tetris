@@ -13,13 +13,15 @@ class Parser {
         this.leftHandRegExp = new RegExp(/.*=/, "g");
         this.rightHandRegExp = new RegExp(/;.*/, "g");
         this.jumpRegExp = new RegExp(/.*;/, "g");
+        this.labelRegExp = new RegExp(/(?!\()(.*)(?<!\))/);
         this.code = new Code_1.default();
         this.lineStack = lines;
         this.currentLineNumber = 0;
         this.currentInstruction = "";
+        this.currentInstructionNumber = 0;
     }
     hasMoreLines() {
-        return this.lineStack.length !== 0;
+        return this.lineStack.length > 0;
     }
     advance() {
         if (!this.hasMoreLines())
@@ -34,6 +36,9 @@ class Parser {
         }
         else {
             this.currentInstruction = line;
+            if (this.instructionType(this.currentInstruction) !== Parser.L_INSTRUCTION) {
+                this.currentInstructionNumber += 1;
+            }
         }
     }
     instructionType(instruction) {
@@ -48,7 +53,21 @@ class Parser {
         // dest=comp;jump
         return Parser.C_INSTRUCTION;
     }
-    // symbol(): string {}
+    symbol(instruction) {
+        const instructionType = this.instructionType(instruction);
+        if (instructionType === Parser.A_INSTRUCTION) {
+            // @xxx -> return xxx
+            return instruction.slice(1);
+        }
+        if (instructionType === Parser.L_INSTRUCTION) {
+            // (xxx) -> return xxx
+            return instruction.match(this.labelRegExp)[0];
+        }
+    }
+    aInstruction(address) {
+        const binaryAddress = parseInt(address).toString(2);
+        return "0000000000000000".substr(binaryAddress.length) + binaryAddress;
+    }
     cInstruction(instruction) {
         return ("111" +
             this.comp(instruction) +

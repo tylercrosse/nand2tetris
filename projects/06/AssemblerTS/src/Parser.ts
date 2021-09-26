@@ -16,6 +16,7 @@ export default class Parser {
   lineStack: string[];
   currentLineNumber: number;
   currentInstruction: string;
+  currentInstructionNumber: number;
 
   whitespaceRegExp = new RegExp(/\s/, "g");
   commentRegExp = new RegExp(/\/\/.*/, "g");
@@ -23,16 +24,18 @@ export default class Parser {
   leftHandRegExp = new RegExp(/.*=/, "g");
   rightHandRegExp = new RegExp(/;.*/, "g");
   jumpRegExp = new RegExp(/.*;/, "g");
+  labelRegExp = new RegExp(/(?!\()(.*)(?<!\))/);
 
   constructor(lines: string[]) {
     this.code = new Code();
     this.lineStack = lines;
     this.currentLineNumber = 0;
     this.currentInstruction = "";
+    this.currentInstructionNumber = 0;
   }
 
   hasMoreLines(): boolean {
-    return this.lineStack.length !== 0;
+    return this.lineStack.length > 0;
   }
 
   advance(): void {
@@ -49,6 +52,11 @@ export default class Parser {
       this.advance();
     } else {
       this.currentInstruction = line;
+      if (
+        this.instructionType(this.currentInstruction) !== Parser.L_INSTRUCTION
+      ) {
+        this.currentInstructionNumber += 1;
+      }
     }
   }
 
@@ -65,7 +73,22 @@ export default class Parser {
     return Parser.C_INSTRUCTION;
   }
 
-  // symbol(): string {}
+  symbol(instruction: string): string {
+    const instructionType = this.instructionType(instruction);
+    if (instructionType === Parser.A_INSTRUCTION) {
+      // @xxx -> return xxx
+      return instruction.slice(1);
+    }
+    if (instructionType === Parser.L_INSTRUCTION) {
+      // (xxx) -> return xxx
+      return instruction.match(this.labelRegExp)[0];
+    }
+  }
+
+  aInstruction(address: string): string {
+    const binaryAddress = parseInt(address).toString(2);
+    return "0000000000000000".substr(binaryAddress.length) + binaryAddress;
+  }
 
   cInstruction(instruction: string): string {
     return (

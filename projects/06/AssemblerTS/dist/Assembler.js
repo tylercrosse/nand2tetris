@@ -1,12 +1,11 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const fs = require("fs");
 const Parser_1 = require("./Parser");
 /**
  *
  */
 class Assembler {
-    constructor(inputFilename) {
+    constructor(file) {
         // construct an empty symbol table
         // add the pre-defined symbols to the symbol table
         this.symbolTable = new Map([
@@ -27,33 +26,71 @@ class Assembler {
             ["R14", "14"],
             ["R15", "15"],
         ]);
-        this.inputFile = fs.readFileSync(inputFilename).toString();
+        this.inputFile = file;
+        this.outputFile = [];
         this.parser = new Parser_1.default(this.inputFile.split("\n"));
+        this.variableAddress = 16;
     }
     firstPass() {
         // scan the entire program
         // for each "instruction" of the form (xxx):
         // add the pair (xxx, address) to the symbol table,
         // where address is the number of the instruction following (xxx)
+        while (this.parser.hasMoreLines()) {
+            this.parser.advance();
+            const { currentInstruction, currentInstructionNumber } = this.parser;
+            const currentInstructionType = this.parser.instructionType(currentInstruction);
+            if (currentInstructionType === Parser_1.default.L_INSTRUCTION) {
+                this.symbolTable.set(this.parser.symbol(currentInstruction), currentInstructionNumber.toString());
+            }
+        }
     }
     secondPass() {
+        // reset parser
+        this.parser = new Parser_1.default(this.inputFile.split("\n"));
         // set n to 16
         // scan the entire program again; for each instruction:
         // if the instruction is @symbol, look up symbol in the symbol table;
         // if (symbol, value) is found, use value to complete the instructions translation;
-        // if not found:
-        // add (symbol, n) to the symbol table,
-        // use n to complete the instruction's translation,
-        // n++
-        // if the instruction is a c-instruction, complete the instruction's translation
-        // write the translated instruction to the output file.
+        while (this.parser.hasMoreLines()) {
+            this.parser.advance();
+            if (!this.parser.hasMoreLines())
+                break;
+            const { currentInstruction, currentInstructionNumber } = this.parser;
+            const currentInstructionType = this.parser.instructionType(currentInstruction);
+            if (currentInstructionType === Parser_1.default.A_INSTRUCTION) {
+                const currentSymbol = this.parser.symbol(currentInstruction);
+                const isSymbolNumber = !isNaN(parseInt(currentSymbol));
+                if (!isSymbolNumber && !this.symbolTable.has(currentSymbol)) {
+                    // if not found:
+                    // add (symbol, n) to the symbol table,
+                    // use n to complete the instruction's translation,
+                    // n++
+                    this.symbolTable.set(currentSymbol, this.variableAddress.toString());
+                    this.variableAddress += 1;
+                }
+                const currentAddress = isSymbolNumber
+                    ? currentSymbol
+                    : this.symbolTable.get(currentSymbol);
+                if (!isNaN(parseInt(currentAddress))) {
+                    this.outputFile.push(this.parser.aInstruction(currentAddress));
+                }
+                else {
+                    throw new Error(`Unable to process current address on input line ${this.parser.currentLineNumber}:
+            ${this.parser.currentInstruction}`);
+                }
+            }
+            if (currentInstructionType === Parser_1.default.C_INSTRUCTION) {
+                this.outputFile.push(this.parser.cInstruction(currentInstruction));
+            }
+        }
     }
-    static main() { }
+    static main(file) {
+        const assembler = new Assembler(file);
+        assembler.firstPass();
+        assembler.secondPass();
+        return assembler.outputFile.join("\n");
+    }
 }
 exports.default = Assembler;
-// CLI
-if (require.main === module) {
-    const args = process.argv.slice(2);
-    console.log(args);
-}
 //# sourceMappingURL=Assembler.js.map
