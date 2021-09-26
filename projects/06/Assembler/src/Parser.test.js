@@ -1,27 +1,24 @@
 import Parser from "./Parser";
-import * as fs from "fs";
-
-jest.mock("fs", () => ({
-  readFileSync: () => `
-// This file is part of www.nand2tetris.org
-// and the book "The Elements of Computing Systems"
-// by Nisan and Schocken, MIT Press.
-// File name: projects/06/add/Add.asm
-
-// Computes R0 = 2 + 3  (R0 refers to RAM[0])
-
-@2
-D=A
-@3
-D=D+A
-@0
-M=D
-`,
-}));
 
 describe("Parser", () => {
+  const lines = `
+  // This file is part of www.nand2tetris.org
+  // and the book "The Elements of Computing Systems"
+  // by Nisan and Schocken, MIT Press.
+  // File name: projects/06/add/Add.asm
+  
+  // Computes R0 = 2 + 3  (R0 refers to RAM[0])
+  
+  @2
+  D=A
+  @3
+  D=D+A
+  @0
+  M=D
+  `.split('\n');
+
   it("instructionType - should be able to determine the type of an instruction", () => {
-    const parser = new Parser();
+    const parser = new Parser(lines);
 
     expect(parser.instructionType("@2")).toEqual(Parser.A_INSTRUCTION);
     expect(parser.instructionType("(LOOP)")).toEqual(Parser.L_INSTRUCTION);
@@ -29,7 +26,7 @@ describe("Parser", () => {
   });
 
   it("advance - should be able to get the next instruction", () => {
-    const parser = new Parser();
+    const parser = new Parser(lines);
 
     expect(parser.lineStack).toHaveLength(15);
     expect(parser.currentInstruction).toEqual("");
@@ -71,7 +68,7 @@ describe("Parser", () => {
   });
 
   it("cInstruction - should determine the C-instruction binary", () => {
-    const parser = new Parser();
+    const parser = new Parser('');
 
     expect(parser.cInstruction("D=A")).toEqual("1110110000010000");
     expect(parser.cInstruction("AD=A-D")).toEqual("1110000111110000");
@@ -81,7 +78,7 @@ describe("Parser", () => {
   });
 
   it("dest - should determine the dest binary", () => {
-    const parser = new Parser();
+    const parser = new Parser('');
 
     expect(parser.dest("D=A")).toEqual("010");
     expect(parser.dest("D=;JGT")).toEqual("010");
@@ -89,7 +86,7 @@ describe("Parser", () => {
   });
 
   it("comp - should determine the comp binary", () => {
-    const parser = new Parser();
+    const parser = new Parser('');
 
     expect(parser.comp("D=A")).toEqual("0110000");
     expect(parser.comp("D=;JGT")).toEqual("0000000");
@@ -97,7 +94,7 @@ describe("Parser", () => {
   });
 
   it("jump - should determine the jump binary", () => {
-    const parser = new Parser();
+    const parser = new Parser('');
 
     expect(parser.jump("D=A")).toEqual("000");
     expect(parser.jump("D=;JGT")).toEqual("001");

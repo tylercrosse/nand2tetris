@@ -1,14 +1,15 @@
-import * as fs from "fs";
 import Code from "./Code";
+
+type InstructionType = 0 | 1 | 2;
 
 /**
  * Encapsulates access to the input assembly code.
  * It provides a convenient means for advancing through the source code, skipping comments and whitespace, and breaking each symbolic instruction into its underlying components.
  */
 export default class Parser {
-  static A_INSTRUCTION = 0;
-  static C_INSTRUCTION = 1;
-  static L_INSTRUCTION = 2;
+  static A_INSTRUCTION: InstructionType = 0;
+  static C_INSTRUCTION: InstructionType = 1;
+  static L_INSTRUCTION: InstructionType = 2;
 
   code: Code;
 
@@ -23,10 +24,9 @@ export default class Parser {
   rightHandRegExp = new RegExp(/;.*/, "g");
   jumpRegExp = new RegExp(/.*;/, "g");
 
-  constructor(filename: string) {
+  constructor(lines: string[]) {
     this.code = new Code();
-    const file = fs.readFileSync(filename);
-    this.lineStack = file.split("\n");
+    this.lineStack = lines;
     this.currentLineNumber = 0;
     this.currentInstruction = "";
   }
@@ -65,7 +65,7 @@ export default class Parser {
     return Parser.C_INSTRUCTION;
   }
 
-  symbol(): string {}
+  // symbol(): string {}
 
   cInstruction(instruction: string): string {
     return (

@@ -1,8 +1,12 @@
+type CodeDict = {
+  [code: string]: string
+}
+
 /**
  * Translates Hack symbols into their binary codes.
  */
 export default class Code {
-  compCodes = {
+  compCodes: CodeDict = {
     // a == 0
     "0": "0101010",
     "1": "0111111",
@@ -39,7 +43,7 @@ export default class Code {
     return this.compCodes[compCode] || "0000000";
   }
 
-  destCodes = {
+  destCodes: CodeDict = {
     "": "000", // null - the value is not stored
     M: "001", // RAM[A]
     D: "010", // D reg
@@ -54,7 +58,7 @@ export default class Code {
     return this.destCodes[destCode] || "000";
   }
 
-  jumpCodes = {
+  jumpCodes: CodeDict = {
     // "": "000", // no jump
     JGT: "001", // if comp > 0 jump
     JEQ: "010", // if comp = 0 jump
