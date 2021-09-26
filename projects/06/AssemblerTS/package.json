@@ -2,7 +2,7 @@
   "name": "Assembler",
   "version": "1.0.0",
   "description": "",
-  "main": "src/Assembler.ts",
+  "main": "dist/Assembler.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
