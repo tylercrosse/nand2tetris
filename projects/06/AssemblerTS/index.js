@@ -16,8 +16,8 @@ if (require.main === module) {
     console.log("👓 Parsing", filename);
     const file = fs.readFileSync(filename).toString();
     const outFilename = filename.replace(".asm", ".hack");
-    console.log("✨ Success!", outFilename);
     fs.writeFileSync(outFilename, Assembler.main(file));
+    console.log("✨ Success!", outFilename);
   } catch (e) {
     console.log("⚠️  Whoops something broke:\n", e);
   }

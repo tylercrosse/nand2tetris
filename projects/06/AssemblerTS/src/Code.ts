@@ -48,6 +48,7 @@ export default class Code {
     M: "001", // RAM[A]
     D: "010", // D reg
     DM: "011", // D reg & RAM[A]
+    MD: "011", // D reg & RAM[A] (handle if the code is reversed)
     A: "100", // A reg
     AM: "101", // A reg & RAM[A]
     AD: "110", // A reg & D reg
