@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+
 
 /**
  * 
@@ -28,7 +30,7 @@ export default class Assembler {
       // write the translated instruction to the output file.
   }
 
-  public static main(): void {
+  static main(): void {
 
   }
 }

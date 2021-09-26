@@ -36,36 +36,36 @@ export default class Code {
   };
 
   comp(compCode: string): string {
-    return this.compCodes[compCode];
+    return this.compCodes[compCode] || "0000000";
   }
 
   destCodes = {
-    '': '000',  // null - the value is not stored
-    M: '001',   // RAM[A]
-    D: '010',   // D reg
-    DM: '011',  // D reg & RAM[A]
-    A: '100',   // A reg
-    AM: '101',  // A reg & RAM[A]
-    AD: '110',  // A reg & D reg
-    ADM: '111', // A reg, D reg, & RAM[A]
-  }
+    "": "000", // null - the value is not stored
+    M: "001", // RAM[A]
+    D: "010", // D reg
+    DM: "011", // D reg & RAM[A]
+    A: "100", // A reg
+    AM: "101", // A reg & RAM[A]
+    AD: "110", // A reg & D reg
+    ADM: "111", // A reg, D reg, & RAM[A]
+  };
 
   dest(destCode: string): string {
-    return this.destCodes[destCode]
+    return this.destCodes[destCode] || "000";
   }
 
   jumpCodes = {
-    '': '000',  // no jump
-    JGT: '001', // if comp > 0 jump
-    JEQ: '010', // if comp = 0 jump
-    JGE: '011', // if comp >= 0 jump
-    JLT: '100', // if comp < 0 jump
-    JNE: '101', // if comp != 0 jump
-    JLE: '110', // if comp <= 0 jump
-    JMP: '111', // unconditional jump
-  }
+    // "": "000", // no jump
+    JGT: "001", // if comp > 0 jump
+    JEQ: "010", // if comp = 0 jump
+    JGE: "011", // if comp >= 0 jump
+    JLT: "100", // if comp < 0 jump
+    JNE: "101", // if comp != 0 jump
+    JLE: "110", // if comp <= 0 jump
+    JMP: "111", // unconditional jump
+  };
 
   jump(jumpCode: string): string {
-    return this.jumpCodes[jumpCode]
+    return this.jumpCodes[jumpCode] || "000";
   }
 }
