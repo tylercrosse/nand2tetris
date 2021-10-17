@@ -8,7 +8,7 @@ if (require.main === module) {
   const args = process.argv.slice(2);
   const filename = args[0];
   if (!filename) {
-    console.log("Missing a filename, useage:");
+    console.log("Missing a filename, usage:");
     console.log("$ node index.js <filename>");
     return;
   }
