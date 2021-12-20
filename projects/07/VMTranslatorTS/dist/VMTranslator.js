@@ -12,6 +12,9 @@ class VMTranslator {
     translate() {
         while (this.parser.hasMoreLines()) {
             this.parser.advance();
+            // handle empty lines at the end of the file
+            if (!this.parser.hasMoreLines())
+                break;
             const { currentCommand } = this.parser;
             const currentCommandType = this.parser.commandType(currentCommand);
             // add comment of vm command to asm file for readability & debugging
@@ -27,12 +30,30 @@ class VMTranslator {
                 case constants_1.C_POP:
                     this.codeWriter.writePop(this.parser.arg1(), this.parser.arg2());
                     break;
+                case constants_1.C_LABEL:
+                    this.codeWriter.writeLabel(this.parser.arg1());
+                    break;
+                case constants_1.C_GOTO:
+                    this.codeWriter.writeGoto(this.parser.arg1());
+                    break;
+                case constants_1.C_IF:
+                    this.codeWriter.writeIf(this.parser.arg1());
+                    break;
+                case constants_1.C_FUNCTION:
+                    this.codeWriter.writeFunction(this.parser.arg1(), this.parser.arg2());
+                    break;
+                case constants_1.C_RETURN:
+                    this.codeWriter.writeReturn();
+                    break;
+                case constants_1.C_CALL:
+                    this.codeWriter.writeCall(this.parser.arg1(), this.parser.arg2());
+                    break;
                 default:
-                    console.warn("Unable to parse command!");
+                    console.warn("Unable to parse command!", currentCommand);
                     break;
             }
         }
-        return this.codeWriter.outputFile.join("\n");
+        return this.codeWriter.outputFile.join("\n") + "\n";
     }
     static main(file) {
         const vmTranslator = new VMTranslator(file);

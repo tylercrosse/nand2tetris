@@ -28,6 +28,9 @@ export default class VMTranslator {
     while (this.parser.hasMoreLines()) {
       this.parser.advance();
 
+      // handle empty lines at the end of the file
+      if (!this.parser.hasMoreLines()) break;
+
       const { currentCommand } = this.parser;
       const currentCommandType = this.parser.commandType(currentCommand);
 
@@ -51,12 +54,30 @@ export default class VMTranslator {
             this.parser.arg2()
           );
           break;
+        case C_LABEL:
+          this.codeWriter.writeLabel(this.parser.arg1());
+          break;
+        case C_GOTO:
+          this.codeWriter.writeGoto(this.parser.arg1());
+          break;
+        case C_IF:
+          this.codeWriter.writeIf(this.parser.arg1());
+          break;
+        case C_FUNCTION:
+          this.codeWriter.writeFunction(this.parser.arg1(), this.parser.arg2());
+          break;
+        case C_RETURN:
+          this.codeWriter.writeReturn();
+          break;
+        case C_CALL:
+          this.codeWriter.writeCall(this.parser.arg1(), this.parser.arg2());
+          break;
         default:
-          console.warn("Unable to parse command!");
+          console.warn("Unable to parse command!", currentCommand);
           break;
       }
     }
-    return this.codeWriter.outputFile.join("\n");
+    return this.codeWriter.outputFile.join("\n") + "\n";
   }
 
   static main(file: string): string {

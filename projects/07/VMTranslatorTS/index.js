@@ -13,7 +13,7 @@ if (require.main === module) {
     return;
   }
   try {
-    console.log("👓 Parsing", filename);
+    console.log("📝 Translating", filename);
     const file = fs.readFileSync(filename).toString();
     const outFilename = filename.replace(".vm", ".asm");
     fs.writeFileSync(outFilename, VMTranslator.main(file));
