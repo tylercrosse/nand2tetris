@@ -7,6 +7,15 @@ class CodeWriter {
     constructor() {
         this.outputFile = [];
         this.logicJumpCounter = 0;
+        this.labelCounter = 0;
+    }
+    writeInit() {
+        this.outputFile.push(`// System Init`);
+        this.outputFile.push(`@256`);
+        this.outputFile.push(`D=A`);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`M=D`);
+        this.writeCall(`Sys.init`, 0);
     }
     /**
      * Adds a comment to the out asm file for vm command for readability & debugging
@@ -16,6 +25,7 @@ class CodeWriter {
         this.outputFile.push(``);
         this.outputFile.push(`// ${command}`);
     }
+    /** @override */
     writeArithmetic(command) {
         switch (command) {
             // pop two values off the stack's top, compute the stated function on them and push the resulting value back onto the stack
@@ -60,8 +70,7 @@ class CodeWriter {
                 this.outputFile.push(`M=D-M`);
                 break;
             default:
-                console.warn("writeArithmetic called with a non-arithmetic command", command);
-                break;
+                throw new Error(`writeArithmetic called with a non-arithmetic command: ${command}`);
         }
     }
     _writeArithmeticCommandBase() {
@@ -86,6 +95,7 @@ class CodeWriter {
         this.outputFile.push(`M=0`);
         this.outputFile.push(`(CONTINUE${this.logicJumpCounter})`);
     }
+    /** @override */
     writePush(segment, index) {
         switch (segment) {
             case "argument":
@@ -125,8 +135,7 @@ class CodeWriter {
                 this.outputFile.push(`M=M+1`);
                 break;
             default:
-                console.warn("writePush called with an unknown segment type", segment);
-                break;
+                throw new Error(`writePush called with an unknown segment type: ${segment}`);
         }
     }
     _writePushHelper(symbol, index, isPointer) {
@@ -145,6 +154,7 @@ class CodeWriter {
         this.outputFile.push(`@SP`);
         this.outputFile.push(`M=M+1`);
     }
+    /** @override */
     writePop(segment, index) {
         switch (segment) {
             case "argument":
@@ -175,8 +185,7 @@ class CodeWriter {
             case "constant":
                 throw new Error("Unable to pop a constant");
             default:
-                console.warn("writePush called with an unknown segment type", segment);
-                break;
+                throw new Error(`writePop called with an unknown segment type: ${segment}`);
         }
     }
     _writePopHelper(symbol, index, isPointer) {
@@ -200,27 +209,93 @@ class CodeWriter {
         this.outputFile.push(`A=M`);
         this.outputFile.push(`M=D`);
     }
+    /** @override */
     writeLabel(label) {
         this.outputFile.push(`(${label})`);
     }
+    /** @override */
     writeGoto(label) {
         this.outputFile.push(`@${label}`); // functionName$label
         this.outputFile.push(`0;JMP`);
     }
+    /** @override */
     writeIf(label) {
         this.outputFile.push(`@${label}`);
         this.outputFile.push(`D;JNE`);
     }
+    /** @override */
     writeFunction(functionName, nVars) {
         this.outputFile.push(`(${functionName})`);
         for (let i = 0; i < nVars; i++) {
             this.writePush("constant", 0);
         }
     }
+    /** @override */
     writeCall(functionName, nArgs) {
-        const returnAddress = ""; // $ret.i
+        const returnAddress = `$ret.${this.labelCounter}`; // $ret.i
+        this.labelCounter += 1;
+        // push return address
+        this.outputFile.push(`@${returnAddress}`);
+        this.outputFile.push(`D=A`);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`A=M`);
+        this.outputFile.push(`M=D`);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`M=M+1`);
+        // push LCL, ARG, THIS, THAT
+        this._writePushHelper("LCL", 0, true);
+        this._writePushHelper("ARG", 0, true);
+        this._writePushHelper("THIS", 0, true);
+        this._writePushHelper("THAT", 0, true);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`D=M`);
+        this.outputFile.push(`@5`);
+        this.outputFile.push(`D=D-A`);
+        this.outputFile.push(`@${nArgs}`);
+        this.outputFile.push(`D=D-A`);
+        this.outputFile.push(`@ARG`);
+        this.outputFile.push(`M=D`);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`D=M`);
+        this.outputFile.push(`@LCL`);
+        this.outputFile.push(`M=D`);
+        this.outputFile.push(`@${functionName}`);
+        this.outputFile.push(`0;JMP`);
+        this.outputFile.push(`(${returnAddress})`);
     }
-    writeReturn() { }
+    /** @override */
+    writeReturn() {
+        this.outputFile.push(`@LCL`);
+        this.outputFile.push(`D=M`);
+        this.outputFile.push(`@R11`);
+        this.outputFile.push(`M=D`);
+        this.outputFile.push(`@5`);
+        this.outputFile.push(`A=D-A`);
+        this.outputFile.push(`D=M`);
+        this.outputFile.push(`@R12`);
+        this.outputFile.push(`M=D`);
+        this._writePopHelper("ARG", 0, false);
+        this.outputFile.push(`@ARG`);
+        this.outputFile.push(`D=M`);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`M=D+1`);
+        this.outputFile.push(`M=D+1`);
+        this._writeReturnHelper("THAT");
+        this._writeReturnHelper("THIS");
+        this._writeReturnHelper("ARG");
+        this._writeReturnHelper("LCL");
+        this.outputFile.push(`@R12`);
+        this.outputFile.push(`A=M`);
+        this.outputFile.push(`0;JMP`);
+    }
+    _writeReturnHelper(position) {
+        this.outputFile.push(`@R11`);
+        this.outputFile.push(`D=M-1`);
+        this.outputFile.push(`AM=D`);
+        this.outputFile.push(`D=M`);
+        this.outputFile.push(`@${position}`);
+        this.outputFile.push(`M=D`);
+    }
 }
 exports.default = CodeWriter;
 //# sourceMappingURL=CodeWriter.js.map

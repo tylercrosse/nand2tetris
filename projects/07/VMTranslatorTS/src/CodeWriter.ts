@@ -1,91 +1,6 @@
-import { CommandType } from "./Parser";
-
-export type SegmentType =
-  | "argument"
-  | "local"
-  | "static"
-  | "constant"
-  | "this"
-  | "that"
-  | "pointer"
-  | "temp";
+import ICodeWriter, { SegmentType } from './ICodeWriter'
 
 type JumpType = "JLE" | "JGE" | "JNE";
-
-/**
- * Implementation indpendent interface specified by The Elements of Computing Systems 2nd Edition pg.165. Note: I made
- * setFileName() and close() optional methods. The book also specifies writePushPop which I split into separate
- * writePush and writePop methods to clean up the implementaiton.
- */
-interface ICodeWriter {
-  /**
-   * Informs that the translation of a new VM file has started (called by the VMTranslator)
-   * @param fileName
-   */
-  setFileName?(fileName: string): void;
-
-  /**
-   * Writes to the output file the assembly code that implements the given arithmetic-logical command.
-   * @param command
-   */
-  writeArithmetic(command: string): void;
-
-  /**
-   * Writes to the output file the assembly code that implements the given `push` command
-   * @param segment
-   * @param index
-   */
-  writePush(segment: SegmentType, index: number): void;
-
-  /**
-   * Writes to the output file the assembly code that implements the given `pop` command
-   * @param segment
-   * @param index
-   */
-  writePop(segment: SegmentType, index: number): void;
-
-  /**
-   * Writes to the output file the assembly code that effects the `label` command
-   * @param label
-   */
-  writeLabel(label: string): void;
-
-  /**
-   * Writes to the output file the assembly code that effects the `goto` command
-   * @param label
-   */
-  writeGoto(label: string): void;
-
-  /**
-   * Writes to the output file the assembly code that effects the `if-goto` command
-   * @param label
-   */
-  writeIf(label: string): void;
-
-  /**
-   * Writes to the output file the assembly code that effects the `function` command
-   * @param functionName
-   * @param nVars
-   */
-  writeFunction(functionName: string, nVars: number): void;
-
-  /**
-   * Writes to the output file the assembly code that effects the `call` command
-   * @param functionName
-   * @param nVars
-   */
-  writeCall(functionName: string, nArgs: number): void;
-
-  /**
-   * Writes to the output file the assembly code that effects the `return` command
-   */
-  writeReturn(): void;
-
-  /**
-   * Closes the output file / stream.
-   */
-  close?(): void;
-}
 
 /**
  * Code Writer implementation for the Hack assembly language
@@ -93,10 +8,21 @@ interface ICodeWriter {
 export default class CodeWriter implements ICodeWriter {
   outputFile: string[];
   logicJumpCounter: number;
+  labelCounter: number;
 
   constructor() {
     this.outputFile = [];
     this.logicJumpCounter = 0;
+    this.labelCounter = 0;
+  }
+
+  writeInit(): void {
+    this.outputFile.push(`// System Init`)
+    this.outputFile.push(`@256`)
+    this.outputFile.push(`D=A`)
+    this.outputFile.push(`@SP`)
+    this.outputFile.push(`M=D`)
+    this.writeCall(`Sys.init`, 0)
   }
 
   /**
@@ -108,6 +34,7 @@ export default class CodeWriter implements ICodeWriter {
     this.outputFile.push(`// ${command}`);
   }
 
+  /** @override */
   writeArithmetic(command: string) {
     switch (command) {
       // pop two values off the stack's top, compute the stated function on them and push the resulting value back onto the stack
@@ -154,11 +81,9 @@ export default class CodeWriter implements ICodeWriter {
         this.outputFile.push(`M=D-M`);
         break;
       default:
-        console.warn(
-          "writeArithmetic called with a non-arithmetic command",
-          command
+        throw new Error(
+          `writeArithmetic called with a non-arithmetic command: ${command}`
         );
-        break;
     }
   }
 
@@ -186,6 +111,7 @@ export default class CodeWriter implements ICodeWriter {
     this.outputFile.push(`(CONTINUE${this.logicJumpCounter})`);
   }
 
+  /** @override */
   writePush(segment: SegmentType, index: number) {
     switch (segment) {
       case "argument":
@@ -224,8 +150,9 @@ export default class CodeWriter implements ICodeWriter {
         break;
 
       default:
-        console.warn("writePush called with an unknown segment type", segment);
-        break;
+        throw new Error(
+          `writePush called with an unknown segment type: ${segment}`
+        );
     }
   }
 
@@ -246,6 +173,7 @@ export default class CodeWriter implements ICodeWriter {
     this.outputFile.push(`M=M+1`);
   }
 
+  /** @override */
   writePop(segment: SegmentType, index: number) {
     switch (segment) {
       case "argument":
@@ -274,8 +202,9 @@ export default class CodeWriter implements ICodeWriter {
       case "constant":
         throw new Error("Unable to pop a constant");
       default:
-        console.warn("writePush called with an unknown segment type", segment);
-        break;
+        throw new Error(
+          `writePop called with an unknown segment type: ${segment}`
+        );
     }
   }
 
@@ -300,20 +229,33 @@ export default class CodeWriter implements ICodeWriter {
     this.outputFile.push(`M=D`);
   }
 
+  /**
+   * Assumes label is properly formatted 
+   * @override
+   */
   writeLabel(label: string): void {
     this.outputFile.push(`(${label})`);
   }
 
+  /**
+   * Assumes label is properly formatted 
+   * @override
+   */
   writeGoto(label: string): void {
     this.outputFile.push(`@${label}`); // functionName$label
     this.outputFile.push(`0;JMP`);
   }
 
+  /**
+   * Assumes label is properly formatted 
+   * @override
+   */
   writeIf(label: string): void {
     this.outputFile.push(`@${label}`);
     this.outputFile.push(`D;JNE`);
   }
 
+  /** @override */
   writeFunction(functionName: string, nVars: number): void {
     this.outputFile.push(`(${functionName})`);
     for (let i = 0; i < nVars; i++) {
@@ -321,9 +263,79 @@ export default class CodeWriter implements ICodeWriter {
     }
   }
 
+  /** @override */
   writeCall(functionName: string, nArgs: number): void {
-    const returnAddress = ""; // $ret.i
+    const returnAddress = `$ret.${this.labelCounter}`; // $ret.i
+    this.labelCounter += 1;
+    
+    // push return address
+    this.outputFile.push(`@${returnAddress}`)
+    this.outputFile.push(`D=A`)
+    this.outputFile.push(`@SP`)
+    this.outputFile.push(`A=M`)
+    this.outputFile.push(`M=D`)
+    this.outputFile.push(`@SP`)
+    this.outputFile.push(`M=M+1`)
+
+    // push LCL, ARG, THIS, THAT
+    this._writePushHelper("LCL", 0, true)
+    this._writePushHelper("ARG", 0, true)
+    this._writePushHelper("THIS", 0, true)
+    this._writePushHelper("THAT", 0, true)
+
+    this.outputFile.push(`@SP`);
+    this.outputFile.push(`D=M`);
+    this.outputFile.push(`@5`);
+    this.outputFile.push(`D=D-A`);
+    this.outputFile.push(`@${nArgs}`);
+    this.outputFile.push(`D=D-A`);
+    this.outputFile.push(`@ARG`);
+    this.outputFile.push(`M=D`);
+    this.outputFile.push(`@SP`);
+    this.outputFile.push(`D=M`);
+    this.outputFile.push(`@LCL`);
+    this.outputFile.push(`M=D`);
+    this.outputFile.push(`@${functionName}`);
+    this.outputFile.push(`0;JMP`);
+    this.outputFile.push(`(${returnAddress})`);
   }
 
-  writeReturn(): void {}
+  /** @override */
+  writeReturn(): void {
+    this.outputFile.push(`@LCL`);
+    this.outputFile.push(`D=M`);
+    this.outputFile.push(`@R11`);
+    this.outputFile.push(`M=D`);
+    this.outputFile.push(`@5`);
+    this.outputFile.push(`A=D-A`);
+    this.outputFile.push(`D=M`);
+    this.outputFile.push(`@R12`);
+    this.outputFile.push(`M=D`);
+
+    this._writePopHelper("ARG", 0, false);
+
+    this.outputFile.push(`@ARG`);
+    this.outputFile.push(`D=M`);
+    this.outputFile.push(`@SP`);
+    this.outputFile.push(`M=D+1`);
+    this.outputFile.push(`M=D+1`);
+
+    this._writeReturnHelper("THAT")
+    this._writeReturnHelper("THIS")
+    this._writeReturnHelper("ARG")
+    this._writeReturnHelper("LCL")
+
+    this.outputFile.push(`@R12`);
+    this.outputFile.push(`A=M`);
+    this.outputFile.push(`0;JMP`);
+  }
+
+  _writeReturnHelper(position: string): void {
+    this.outputFile.push(`@R11`)
+    this.outputFile.push(`D=M-1`)
+    this.outputFile.push(`AM=D`)
+    this.outputFile.push(`D=M`)
+    this.outputFile.push(`@${position}`)
+    this.outputFile.push(`M=D`)
+  }
 }

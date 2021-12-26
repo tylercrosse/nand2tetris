@@ -1,35 +1,37 @@
 const path = require("path");
 const fs = require("fs");
 const { exec } = require("child_process");
-const VMTranslator = require("./dist/VMTranslator").default;
-const { Console } = require("console");
+const translateDirOrFiles = require('./index');
 
 const CPU_EMULATOR_PATH =
   "/Users/crossetx/Desktop/nand2tetris/tools/CPUEmulator.sh";
 
 // compile VMTranslator (optional?)
 
-function buildFileStack(dir, filetype) {
-  const extRegExp = new RegExp(`\\.${filetype}$`);
-  const fileStack = [];
+function buildFileQueue(dir) {
+  const vmRegExp = new RegExp(`\\.vm$`);
+  const fileQueue = [];
 
   function traverse(currentDir) {
     const files = fs.readdirSync(currentDir);
+    const vmFiles = files.filter(file => vmRegExp.test(file));
+    // at least one vm file and none of the vm files are named the same as the directory
+    if (vmFiles.length > 0 && !vmFiles.some(file => file.includes(currentDir))) {
+      fileQueue.push(translateDirOrFiles(currentDir, false))
+    } else if (vmFiles.length === 1){
+      fileQueue.push(translateDirOrFiles(vmFiles[0], false))
+    }
+    
     files.forEach((file) => {
       const resolvedPath = path.resolve(currentDir, file);
       if (fs.lstatSync(resolvedPath).isDirectory()) {
         traverse(resolvedPath);
-      } else if (extRegExp.test(file)) {
-        fileStack.push({
-          name: file,
-          resolvedPath,
-        });
       }
     });
   }
   traverse(dir);
 
-  return fileStack;
+  return fileQueue;
 }
 
 function testASM(name, resolvedPath) {
@@ -57,16 +59,11 @@ if (require.main === module) {
   }
 
   try {
-    // traversal of directory & find .vm files
-    const vmFileStack = buildFileStack(dir, "vm");
+    const asmFileQueue = buildFileQueue(dir);
 
-    vmFileStack.forEach((file) => {
-      const fileContents = fs.readFileSync(file.resolvedPath).toString();
-      const outPath = file.resolvedPath.replace(".vm", ".asm");
-      const tstPath = file.resolvedPath.replace(".vm", ".tst");
-      fs.writeFileSync(outPath, VMTranslator.main(fileContents));
-
-      testASM(file.name, tstPath);
+    asmFileQueue.forEach((file) => {
+      const tstPath = file.replace(".asm", ".tst");
+      testASM(path.basename(file), tstPath);
     });
   } catch (e) {
     console.log("⚠️  Whoops something broke while testing:\n", e);

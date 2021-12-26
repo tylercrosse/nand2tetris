@@ -2,16 +2,17 @@
 // push constant 0
 @0
 D=A
-D=A
 @SP
 A=M
 M=D
 @SP
 M=M+1
 
-// pop local 0         
+// pop local 0
 @LCL
-D=A
+D=M
+@0
+D=D+A
 @R13
 M=D
 @SP
@@ -22,9 +23,13 @@ A=M
 M=D
 
 // label LOOP_START
+(LOOP_START)
 
 // push argument 0
 @ARG
+D=M
+@0
+A=D+A
 D=M
 @SP
 A=M
@@ -34,6 +39,9 @@ M=M+1
 
 // push local 0
 @LCL
+D=M
+@0
+A=D+A
 D=M
 @SP
 A=M
@@ -48,9 +56,11 @@ D=M
 A=A-1
 M=M+D
 
-// pop local 0	        
+// pop local 0
 @LCL
-D=A
+D=M
+@0
+D=D+A
 @R13
 M=D
 @SP
@@ -63,6 +73,9 @@ M=D
 // push argument 0
 @ARG
 D=M
+@0
+A=D+A
+D=M
 @SP
 A=M
 M=D
@@ -71,7 +84,6 @@ M=M+1
 
 // push constant 1
 @1
-D=A
 D=A
 @SP
 A=M
@@ -86,9 +98,11 @@ D=M
 A=A-1
 M=M-D
 
-// pop argument 0      
+// pop argument 0
 @ARG
-D=A
+D=M
+@0
+D=D+A
 @R13
 M=D
 @SP
@@ -101,16 +115,8 @@ M=D
 // push argument 0
 @ARG
 D=M
-@SP
-A=M
-M=D
-@SP
-M=M+1
-
-// if-goto LOOP_START  
-
-// push local 0
-@LCL
+@0
+A=D+A
 D=M
 @SP
 A=M
@@ -118,8 +124,15 @@ M=D
 @SP
 M=M+1
 
+// if-goto LOOP_START
+@LOOP_START
+D;JNE
+
 // push local 0
 @LCL
+D=M
+@0
+A=D+A
 D=M
 @SP
 A=M
