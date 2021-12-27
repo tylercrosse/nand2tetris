@@ -9,6 +9,9 @@ class CodeWriter {
         this.logicJumpCounter = 0;
         this.labelCounter = 0;
     }
+    setFileName(fileName) {
+        this.fileName = fileName;
+    }
     writeInit() {
         this.outputFile.push(`// System Init`);
         this.outputFile.push(`@256`);
@@ -113,9 +116,6 @@ class CodeWriter {
             case "temp":
                 this._writePushHelper("R5", index + 5, false);
                 break;
-            case "static":
-                this._writePushHelper(`${16 + index}`, index, false);
-                break;
             case "pointer": {
                 if (index === 0)
                     this._writePushHelper("THIS", index, true);
@@ -123,6 +123,15 @@ class CodeWriter {
                     this._writePushHelper("THAT", index, true);
                 break;
             }
+            case "static":
+                this.outputFile.push(`@${this.fileName}${index}`);
+                this.outputFile.push(`D=M`);
+                this.outputFile.push(`@SP`);
+                this.outputFile.push(`A=M`);
+                this.outputFile.push(`M=D`);
+                this.outputFile.push(`@SP`);
+                this.outputFile.push(`M=M+1`);
+                break;
             case "constant":
                 // RAM[SP] = x
                 this.outputFile.push(`@${index}`);
@@ -172,9 +181,6 @@ class CodeWriter {
             case "temp":
                 this._writePopHelper("R5", index + 5, false);
                 break;
-            case "static":
-                this._writePopHelper(`${16 + index}`, index, false);
-                break;
             case "pointer": {
                 if (index === 0)
                     this._writePopHelper("THIS", index, true);
@@ -182,6 +188,18 @@ class CodeWriter {
                     this._writePopHelper("THAT", index, true);
                 break;
             }
+            case "static":
+                this.outputFile.push(`@${this.fileName}${index}`);
+                this.outputFile.push(`D=A`);
+                this.outputFile.push(`@R13`);
+                this.outputFile.push(`M=D`);
+                this.outputFile.push(`@SP`);
+                this.outputFile.push(`AM=M-1`);
+                this.outputFile.push(`D=M`);
+                this.outputFile.push(`@R13`);
+                this.outputFile.push(`A=M`);
+                this.outputFile.push(`M=D`);
+                break;
             case "constant":
                 throw new Error("Unable to pop a constant");
             default:
@@ -220,6 +238,7 @@ class CodeWriter {
     }
     /** @override */
     writeIf(label) {
+        this._writeArithmeticCommandBase();
         this.outputFile.push(`@${label}`);
         this.outputFile.push(`D;JNE`);
     }

@@ -1,4 +1,4 @@
-import ICodeWriter, { SegmentType } from './ICodeWriter'
+import ICodeWriter, { SegmentType } from "./ICodeWriter";
 
 type JumpType = "JLE" | "JGE" | "JNE";
 
@@ -9,6 +9,7 @@ export default class CodeWriter implements ICodeWriter {
   outputFile: string[];
   logicJumpCounter: number;
   labelCounter: number;
+  fileName: string;
 
   constructor() {
     this.outputFile = [];
@@ -16,13 +17,17 @@ export default class CodeWriter implements ICodeWriter {
     this.labelCounter = 0;
   }
 
+  setFileName(fileName: string): void {
+    this.fileName = fileName;
+  }
+
   writeInit(): void {
-    this.outputFile.push(`// System Init`)
-    this.outputFile.push(`@256`)
-    this.outputFile.push(`D=A`)
-    this.outputFile.push(`@SP`)
-    this.outputFile.push(`M=D`)
-    this.writeCall(`Sys.init`, 0)
+    this.outputFile.push(`// System Init`);
+    this.outputFile.push(`@256`);
+    this.outputFile.push(`D=A`);
+    this.outputFile.push(`@SP`);
+    this.outputFile.push(`M=D`);
+    this.writeCall(`Sys.init`, 0);
   }
 
   /**
@@ -129,14 +134,20 @@ export default class CodeWriter implements ICodeWriter {
       case "temp":
         this._writePushHelper("R5", index + 5, false);
         break;
-      case "static":
-        this._writePushHelper(`${16 + index}`, index, false);
-        break;
       case "pointer": {
         if (index === 0) this._writePushHelper("THIS", index, true);
         if (index === 1) this._writePushHelper("THAT", index, true);
         break;
       }
+      case "static":
+        this.outputFile.push(`@${this.fileName}${index}`);
+        this.outputFile.push(`D=M`);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`A=M`);
+        this.outputFile.push(`M=D`);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`M=M+1`);
+        break;
       case "constant":
         // RAM[SP] = x
         this.outputFile.push(`@${index}`);
@@ -191,14 +202,23 @@ export default class CodeWriter implements ICodeWriter {
       case "temp":
         this._writePopHelper("R5", index + 5, false);
         break;
-      case "static":
-        this._writePopHelper(`${16 + index}`, index, false);
-        break;
       case "pointer": {
         if (index === 0) this._writePopHelper("THIS", index, true);
         if (index === 1) this._writePopHelper("THAT", index, true);
         break;
       }
+      case "static":
+        this.outputFile.push(`@${this.fileName}${index}`);
+        this.outputFile.push(`D=A`);
+        this.outputFile.push(`@R13`);
+        this.outputFile.push(`M=D`);
+        this.outputFile.push(`@SP`);
+        this.outputFile.push(`AM=M-1`);
+        this.outputFile.push(`D=M`);
+        this.outputFile.push(`@R13`);
+        this.outputFile.push(`A=M`);
+        this.outputFile.push(`M=D`);
+        break;
       case "constant":
         throw new Error("Unable to pop a constant");
       default:
@@ -229,28 +249,20 @@ export default class CodeWriter implements ICodeWriter {
     this.outputFile.push(`M=D`);
   }
 
-  /**
-   * Assumes label is properly formatted 
-   * @override
-   */
+  /** @override */
   writeLabel(label: string): void {
     this.outputFile.push(`(${label})`);
   }
 
-  /**
-   * Assumes label is properly formatted 
-   * @override
-   */
+  /** @override */
   writeGoto(label: string): void {
     this.outputFile.push(`@${label}`); // functionName$label
     this.outputFile.push(`0;JMP`);
   }
 
-  /**
-   * Assumes label is properly formatted 
-   * @override
-   */
+  /** @override */
   writeIf(label: string): void {
+    this._writeArithmeticCommandBase();
     this.outputFile.push(`@${label}`);
     this.outputFile.push(`D;JNE`);
   }
@@ -267,21 +279,21 @@ export default class CodeWriter implements ICodeWriter {
   writeCall(functionName: string, nArgs: number): void {
     const returnAddress = `$ret.${this.labelCounter}`; // $ret.i
     this.labelCounter += 1;
-    
+
     // push return address
-    this.outputFile.push(`@${returnAddress}`)
-    this.outputFile.push(`D=A`)
-    this.outputFile.push(`@SP`)
-    this.outputFile.push(`A=M`)
-    this.outputFile.push(`M=D`)
-    this.outputFile.push(`@SP`)
-    this.outputFile.push(`M=M+1`)
+    this.outputFile.push(`@${returnAddress}`);
+    this.outputFile.push(`D=A`);
+    this.outputFile.push(`@SP`);
+    this.outputFile.push(`A=M`);
+    this.outputFile.push(`M=D`);
+    this.outputFile.push(`@SP`);
+    this.outputFile.push(`M=M+1`);
 
     // push LCL, ARG, THIS, THAT
-    this._writePushHelper("LCL", 0, true)
-    this._writePushHelper("ARG", 0, true)
-    this._writePushHelper("THIS", 0, true)
-    this._writePushHelper("THAT", 0, true)
+    this._writePushHelper("LCL", 0, true);
+    this._writePushHelper("ARG", 0, true);
+    this._writePushHelper("THIS", 0, true);
+    this._writePushHelper("THAT", 0, true);
 
     this.outputFile.push(`@SP`);
     this.outputFile.push(`D=M`);
@@ -320,10 +332,10 @@ export default class CodeWriter implements ICodeWriter {
     this.outputFile.push(`M=D+1`);
     this.outputFile.push(`M=D+1`);
 
-    this._writeReturnHelper("THAT")
-    this._writeReturnHelper("THIS")
-    this._writeReturnHelper("ARG")
-    this._writeReturnHelper("LCL")
+    this._writeReturnHelper("THAT");
+    this._writeReturnHelper("THIS");
+    this._writeReturnHelper("ARG");
+    this._writeReturnHelper("LCL");
 
     this.outputFile.push(`@R12`);
     this.outputFile.push(`A=M`);
@@ -331,11 +343,11 @@ export default class CodeWriter implements ICodeWriter {
   }
 
   _writeReturnHelper(position: string): void {
-    this.outputFile.push(`@R11`)
-    this.outputFile.push(`D=M-1`)
-    this.outputFile.push(`AM=D`)
-    this.outputFile.push(`D=M`)
-    this.outputFile.push(`@${position}`)
-    this.outputFile.push(`M=D`)
+    this.outputFile.push(`@R11`);
+    this.outputFile.push(`D=M-1`);
+    this.outputFile.push(`AM=D`);
+    this.outputFile.push(`D=M`);
+    this.outputFile.push(`@${position}`);
+    this.outputFile.push(`M=D`);
   }
 }

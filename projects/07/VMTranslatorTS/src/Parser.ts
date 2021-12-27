@@ -87,7 +87,8 @@ export default class Parser {
   }
 
   /**
-   * Returns a constant representing the type of the current command. C_ARITHMETIC is returned for all arithmetic/logical commands.
+   * Returns a constant representing the type of the current command. C_ARITHMETIC is returned for all
+   * arithmetic/logical commands.
    */
   commandType(currentCommand = this.currentCommand): CommandType {
     const command = currentCommand.match(this.argumentsRegExp)[0];
@@ -95,8 +96,8 @@ export default class Parser {
   }
 
   /**
-   * Returns the first argument of the current command. In the case of C_ARITHMETIC, the command itself (add, sub, etc.) is returned. 
-   * Should not be called if the current command is C_RETURN.
+   * Returns the first argument of the current command. In the case of C_ARITHMETIC, the command itself (add, sub, etc.)
+   * is returned. Should not be called if the current command is C_RETURN.
    */
   arg1(currentCommand = this.currentCommand): string {
     const command = currentCommand.match(this.argumentsRegExp)[1];
@@ -104,8 +105,8 @@ export default class Parser {
   }
 
   /**
-   * Returns the second argument of the current command. 
-   * Should be called only if the current command is C_PUSH, C_POP, C_FUNCTION, or C_CALL. 
+   * Returns the second argument of the current command. Should be called only if the current command is C_PUSH, C_POP,
+   * C_FUNCTION, or C_CALL. 
    */
   arg2(currentCommand = this.currentCommand): number {
     return parseInt(currentCommand.match(this.argumentsRegExp)[2], 10);

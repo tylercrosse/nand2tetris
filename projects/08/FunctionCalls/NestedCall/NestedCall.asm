@@ -1,3 +1,58 @@
+// System Init
+@256
+D=A
+@SP
+M=D
+@$ret.0
+D=A
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@LCL
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@ARG
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THIS
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@THAT
+D=M
+@SP
+A=M
+M=D
+@SP
+M=M+1
+@SP
+D=M
+@5
+D=D-A
+@0
+D=D-A
+@ARG
+M=D
+@SP
+D=M
+@LCL
+M=D
+@Sys.init
+0;JMP
+($ret.0)
 
 // function Sys.init 0
 (Sys.init)
@@ -45,7 +100,7 @@ A=M
 M=D
 
 // call Sys.main 0
-@$ret.0
+@$ret.1
 D=A
 @SP
 A=M
@@ -94,7 +149,7 @@ D=M
 M=D
 @Sys.main
 0;JMP
-($ret.0)
+($ret.1)
 
 // pop temp 1
 @R5
@@ -276,7 +331,7 @@ M=D
 M=M+1
 
 // call Sys.add12 1
-@$ret.1
+@$ret.2
 D=A
 @SP
 A=M
@@ -325,7 +380,7 @@ D=M
 M=D
 @Sys.add12
 0;JMP
-($ret.1)
+($ret.2)
 
 // pop temp 0
 @R5

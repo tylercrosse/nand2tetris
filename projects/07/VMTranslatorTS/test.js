@@ -34,6 +34,7 @@ function buildFileQueue(dir) {
   return fileQueue;
 }
 
+/** Runs the CPU Emulator against the generated asm files. */
 function testASM(name, resolvedPath) {
   exec(`${CPU_EMULATOR_PATH} ${resolvedPath}`, (error, stdout, stderr) => {
     if (error) {

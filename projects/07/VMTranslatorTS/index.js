@@ -7,31 +7,25 @@ const VMTranslator = require("./dist/VMTranslator").default;
 function translateDirOrFiles(filename, shouldLog = true) {
   const isDir = fs.lstatSync(filename).isDirectory();
   const vmRegExp = new RegExp(`\\.vm$`);
-  
+
   if (isDir) {
     shouldLog && console.log("📝 Translating Dir", filename);
     const files = fs.readdirSync(filename);
-    const output = files
-      .filter((file) => vmRegExp.test(file))
-      .map((file) => {
-        const fileContents = fs
-          .readFileSync(path.join(filename, file))
-          .toString();
-        return VMTranslator.main(fileContents);
-      })
-      .join("\n");
+    const inputFiles = files.filter((file) => vmRegExp.test(file));
+    const inputFileContents = inputFiles.map((file) =>
+      fs.readFileSync(path.join(filename, file)).toString()
+    );
     const outFilename = path.join(filename, `${path.basename(filename)}.asm`);
-    fs.writeFileSync(outFilename, output);
+    fs.writeFileSync(outFilename, VMTranslator.main(inputFileContents, inputFiles));
     shouldLog && console.log("✨ Success!", outFilename);
     return outFilename;
-  
   } else {
     shouldLog && console.log("📝 Translating File", filename);
-    const file = fs.readFileSync(filename).toString();
+    const inputFileContents = fs.readFileSync(filename).toString();
     const outFilename = filename.replace(".vm", ".asm");
-    fs.writeFileSync(outFilename, VMTranslator.main(file));
+    fs.writeFileSync(outFilename, VMTranslator.main([inputFileContents], [path.basename(filename)]));
     shouldLog && console.log("✨ Success!", outFilename);
-    return outFilename
+    return outFilename;
   }
 }
 
