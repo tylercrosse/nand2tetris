@@ -60,7 +60,14 @@ export default class Parser {
     }
   }
 
-  instructionType(instruction: string): InstructionType {
+  /**
+   * Returns the type of the an instruction. defaults to the current instruction:
+   * @param instruction defaults to the current instruction
+   * @returns 
+   */
+  instructionType(
+    instruction: string = this.currentInstruction
+  ): InstructionType {
     // @xxx, where xxx is either a decimal number or a symbol
     if (instruction.charAt(0) === "@") {
       return Parser.A_INSTRUCTION;
@@ -73,7 +80,12 @@ export default class Parser {
     return Parser.C_INSTRUCTION;
   }
 
-  symbol(instruction: string): string {
+  /**
+   * Should be called only instructionType is A_INSTRUCTION or C_INSTRUCTION
+   * @param instruction defaults to the current instruction
+   * @returns 
+   */
+  symbol(instruction: string = this.currentInstruction): string {
     const instructionType = this.instructionType(instruction);
     if (instructionType === Parser.A_INSTRUCTION) {
       // @xxx -> return xxx

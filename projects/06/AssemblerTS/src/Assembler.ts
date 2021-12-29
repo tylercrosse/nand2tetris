@@ -55,13 +55,13 @@ export default class Assembler {
     // where address is the number of the instruction following (xxx)
     while (this.parser.hasMoreLines()) {
       this.parser.advance();
-      const { currentInstruction, currentInstructionNumber } = this.parser;
+      const { currentInstructionNumber } = this.parser;
       const currentInstructionType =
-        this.parser.instructionType(currentInstruction);
+        this.parser.instructionType();
 
       if (currentInstructionType === Parser.L_INSTRUCTION) {
         this.symbolTable.set(
-          this.parser.symbol(currentInstruction),
+          this.parser.symbol(),
           currentInstructionNumber.toString()
         );
       }
@@ -80,12 +80,12 @@ export default class Assembler {
       this.parser.advance();
       if (!this.parser.hasMoreLines()) break;
 
-      const { currentInstruction, currentInstructionNumber } = this.parser;
+      const { currentInstructionNumber } = this.parser;
       const currentInstructionType =
-        this.parser.instructionType(currentInstruction);
+        this.parser.instructionType();
 
       if (currentInstructionType === Parser.A_INSTRUCTION) {
-        const currentSymbol = this.parser.symbol(currentInstruction);
+        const currentSymbol = this.parser.symbol();
         const isSymbolNumber = !isNaN(parseInt(currentSymbol));
 
         if (!isSymbolNumber && !this.symbolTable.has(currentSymbol)) {
