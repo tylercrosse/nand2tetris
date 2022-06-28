@@ -75,6 +75,14 @@ export default class JackTokenizer {
   }
 
   /**
+   * Peeks at the next token.
+   * @returns next token
+   */
+  peekNextToken(): string {
+    return this.tokens[0];
+  }
+
+  /**
    * Gets the next token from the input and makes it the current token. This method should be called if hasMoreTokens() is true.
    */
   advance(): void {
@@ -103,7 +111,7 @@ export default class JackTokenizer {
   /**
    * Returns the keyword which is the current token. Should be called only when tokenType() is KEYWORD.
    */
-  keyWord(): string {
+  keyWord(): string{
     if (this.tokenType() === TokenTypes.KEYWORD) return this.currentToken;
   }
 

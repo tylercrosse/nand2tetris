@@ -1,4 +1,4 @@
-import JackTokenizer, { TokenTypes } from "../src/JackTokenizer";
+import JackTokenizer, { TokenTypes } from "./JackTokenizer";
 
 describe("JackTokenizer", () => {
   const input = `
