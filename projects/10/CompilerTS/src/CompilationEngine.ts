@@ -1,11 +1,38 @@
+import AST, { ASTNode } from "./AST";
+import JackTokenizer, { TokenTypes, KeyWordTypes } from "./JackTokenizer";
+
+class CompilationError extends Error {
+  constructor(message: string, ...args: any[]) {
+    super(...args)
+  }
+}
+
 /**
  * Recursive top-down parser for Jack language.
  */
 export default class CompilationEngine {
+  ast: AST;
+  tokenizer: JackTokenizer
+
+  constructor(input: string) {
+    this.ast = new AST();
+    this.tokenizer = new JackTokenizer(input);
+  }
+  
   /**
    * Compiles a complete class
    */
-  compileClass(): void {}
+  compileClass(): void {
+    this.tokenizer.advance();
+
+    if (this.tokenizer.currentToken !== KeyWordTypes.CLASS) {
+      throw new CompilationError('class')
+    }
+    this.ast.root = new ASTNode(this.tokenizer.currentToken)
+    this.tokenizer.advance();
+    this.ast.addChild()
+  
+  }
 
   /**
    * Compiles a static variable declaration, or a field declaration

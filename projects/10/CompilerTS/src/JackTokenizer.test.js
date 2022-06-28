@@ -1,4 +1,4 @@
-import JackTokenizer from "../src/JackTokenizer";
+import JackTokenizer, { TokenTypes } from "../src/JackTokenizer";
 
 describe("JackTokenizer", () => {
   const input = `
@@ -15,29 +15,29 @@ class Main {
         var Array a;
         var int length;
         var int i, sum;
-	
-	let length = Keyboard.readInt("HOW MANY NUMBERS? ");
-	let a = Array.new(length);
-	let i = 0;
-	
-	while (i < length) {
-	    let a[i] = Keyboard.readInt("ENTER THE NEXT NUMBER: ");
-	    let i = i + 1;
-	}
-	
-	let i = 0;
-	let sum = 0;
-	
-	while (i < length) {
-	    let sum = sum + a[i];
-	    let i = i + 1;
-	}
-	
-	do Output.printString("THE AVERAGE IS: ");
-	do Output.printInt(sum / length);
-	do Output.println();
-	
-	return;
+  
+  let length = Keyboard.readInt("HOW MANY NUMBERS? ");
+  let a = Array.new(length);
+  let i = 0;
+  
+  while (i < length) {
+      let a[i] = Keyboard.readInt("ENTER THE NEXT NUMBER: ");
+      let i = i + 1;
+  }
+  
+  let i = 0;
+  let sum = 0;
+  
+  while (i < length) {
+      let sum = sum + a[i];
+      let i = i + 1;
+  }
+  
+  do Output.printString("THE AVERAGE IS: ");
+  do Output.printInt(sum / length);
+  do Output.println();
+  
+  return;
     }
 }
 `;
@@ -45,9 +45,40 @@ class Main {
   it("should be able to tokenize a file", () => {
     const tokenizer = new JackTokenizer(input);
 
-    expect(tokenizer.tokens).toMatchSnapshot();
     expect(tokenizer.tokens).toHaveLength(140);
+
+    // check some of the output locally
+    expect(tokenizer.tokens.slice(0, 7)).toEqual([
+      "class",
+      "Main",
+      "{",
+      "function",
+      "void",
+      "main",
+      "(",
+    ]);
+
+    // be more exhaustive
+    expect(tokenizer.tokens).toMatchSnapshot();
   });
 
-  it('should be able to determine the type of a token', () => {});
+  it("should be able to determine the type of a token", () => {
+    const tokenizer = new JackTokenizer(input);
+
+    const types = tokenizer.tokens.map((token) => tokenizer.tokenType(token));
+
+    // check some of the output locally
+    expect(types.slice(0, 7)).toEqual([
+      TokenTypes.KEYWORD,
+      TokenTypes.IDENTIFIER,
+      TokenTypes.SYMBOL,
+      TokenTypes.KEYWORD,
+      TokenTypes.IDENTIFIER,
+      TokenTypes.IDENTIFIER,
+      TokenTypes.SYMBOL,
+    ]);
+
+    // be more exhaustive
+    expect(types).toMatchSnapshot();
+  });
 });
