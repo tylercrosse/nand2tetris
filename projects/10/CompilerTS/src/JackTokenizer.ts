@@ -1,33 +1,33 @@
-export enum TokenTypes {
-  "KEYWORD",
-  "SYMBOL",
-  "IDENTIFIER",
-  "INT_CONST",
-  "STRING_CONST",
-}
+export const TokenTypes = {
+  KEYWORD: "KEYWORD",
+  SYMBOL: "SYMBOL",
+  IDENTIFIER: "IDENTIFIER",
+  INT_CONST: "INT_CONST",
+  STRING_CONST: "STRING_CONST",
+};
 export const KeyWordTypes = {
-  "CLASS": "class",
-  "METHOD": "method",
-  "FUNCTION": "function",
-  "CONSTRUCTOR": "constructor",
-  "INT": "int",
-  "BOOLEAN": "boolean",
-  "CHAR": "char",
-  "VOID": "void",
-  "VAR": "var",
-  "STATIC": "static",
-  "FIELD": "field",
-  "LET": "let",
-  "DO": "do",
-  "IF": "if",
-  "ELSE": "else",
-  "WHILE": "while",
-  "RETURN": "return",
-  "TRUE": "true",
-  "FALSE": "false",
-  "NULL": "null",
-  "THIS": "this",
-}
+  CLASS: "class",
+  METHOD: "method",
+  FUNCTION: "function",
+  CONSTRUCTOR: "constructor",
+  INT: "int",
+  BOOLEAN: "boolean",
+  CHAR: "char",
+  VOID: "void",
+  VAR: "var",
+  STATIC: "static",
+  FIELD: "field",
+  LET: "let",
+  DO: "do",
+  IF: "if",
+  ELSE: "else",
+  WHILE: "while",
+  RETURN: "return",
+  TRUE: "true",
+  FALSE: "false",
+  NULL: "null",
+  THIS: "this",
+};
 
 /**
  * Tokenizer for Jack language
@@ -111,7 +111,7 @@ export default class JackTokenizer {
   /**
    * Returns the keyword which is the current token. Should be called only when tokenType() is KEYWORD.
    */
-  keyWord(): string{
+  keyWord(): string {
     if (this.tokenType() === TokenTypes.KEYWORD) return this.currentToken;
   }
 
@@ -133,7 +133,8 @@ export default class JackTokenizer {
    * Returns the integer value of the current token. Should be called only when tokenType() is INT_CONST.
    */
   intVal(): number {
-    if (this.tokenType() === TokenTypes.INT_CONST) return parseInt(this.currentToken,10);
+    if (this.tokenType() === TokenTypes.INT_CONST)
+      return parseInt(this.currentToken, 10);
   }
 
   /**

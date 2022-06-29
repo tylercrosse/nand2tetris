@@ -11,12 +11,17 @@ export class ASTNode {
 }
 
 export default class AST {
-  root: ASTNode
+  root: ASTNode = null;
 
   constructor() {}
 
-  addChild(node: ASTNode, root=this.root): void {
-    root.children.push(node)
+  addChild(node: ASTNode, root?: ASTNode): void {
+    if (this.root === null) {
+      this.root = node;
+    } else {
+      root = root || this.root;
+      root.children.push(node)
+    }
   }
 
   treeTraverser(node: ASTNode, level=0, callback?: Function) {

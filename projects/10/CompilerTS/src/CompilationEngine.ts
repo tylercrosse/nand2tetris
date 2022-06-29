@@ -1,3 +1,4 @@
+import { nextTick } from "process";
 import AST, { ASTNode } from "./AST";
 import JackTokenizer, { TokenTypes, KeyWordTypes } from "./JackTokenizer";
 
@@ -41,14 +42,16 @@ export default class CompilationEngine {
       throw new CompilationError("class");
     }
     this.currentParent = new ASTNode("class");
-    this.ast.root = this.currentParent;
+    this.ast.addChild(this.currentParent);
     this.ast.addChild(new ASTNode("keyword", "class"));
 
     this.addHelper(TokenTypes.IDENTIFIER, "identifier");
-    this.addHelper(TokenTypes.SYMBOL, "symbol");
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // {
 
     this.compileClassVarDec();
     this.compileSubroutine();
+
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // }
   }
 
   /**
@@ -60,12 +63,13 @@ export default class CompilationEngine {
    * Compiles a complete method, function, or constructor
    */
   compileSubroutine(): void {
+    const prevParent = this.currentParent;
+
     // end of class - base case
     if (this.tokenizer.peekNextToken() === "}") {
-      this.addHelper(TokenTypes.SYMBOL, "symbol");
       return;
-    };
-    
+    }
+
     this.tokenizer.advance();
     const currTok = this.tokenizer.currentToken;
     if (
@@ -83,17 +87,15 @@ export default class CompilationEngine {
     if (this.tokenizer.peekNextToken() === KeyWordTypes.VOID) {
       this.addHelper(TokenTypes.KEYWORD, "keyword");
     }
-    // subroutine name
-    this.addHelper(TokenTypes.IDENTIFIER, "identifier");
-    // (
-    this.addHelper(TokenTypes.SYMBOL, "symbol");
+    this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // subroutine name
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
 
     this.compileParameterList();
 
-    // )
-    this.addHelper(TokenTypes.SYMBOL, "symbol");
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
 
     this.compileSubroutineBody();
+    this.currentParent = prevParent;
 
     // recurse
     this.compileSubroutine();
@@ -107,6 +109,7 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("parameterList");
     this.ast.addChild(this.currentParent, prevParent);
 
+    // TODO
     // do {
     //   if (this.tokenizer.peekNextToken() !== ")") break;
     //   this.addHelper(TokenTypes.KEYWORD, "keyword");
@@ -126,11 +129,12 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("subroutineBody");
     this.ast.addChild(this.currentParent, prevParent);
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol");
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // {
 
-    // TODO probs add some conditionals & other logic
     this.compileVarDec();
     this.compileStatements();
+
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // }
 
     this.currentParent = prevParent;
   }
@@ -170,7 +174,6 @@ export default class CompilationEngine {
       }
     } while (true);
 
-
     this.currentParent = prevParent;
 
     this.compileVarDec();
@@ -184,7 +187,20 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("statements");
     this.ast.addChild(this.currentParent, prevParent);
 
-    switch(this.tokenizer.peekNextToken()) {
+    this.compileStatement();
+
+    this.currentParent = prevParent;
+  }
+
+  /**
+   * Compiles a single
+   */
+  compileStatement(): void {
+    if (this.tokenizer.peekNextToken() === '}') {
+      return;
+    }
+
+    switch (this.tokenizer.peekNextToken()) {
       case KeyWordTypes.LET:
         this.compileLet();
         break;
@@ -201,10 +217,9 @@ export default class CompilationEngine {
         this.compileReturn();
         break;
       default:
-        // throw new CompilationError('let|if|while|do|return');
+      // throw new CompilationError('let|if|while|do|return');
     }
-
-    this.currentParent = prevParent;
+    this.compileStatement();
   }
 
   /**
@@ -214,13 +229,22 @@ export default class CompilationEngine {
     const prevParent = this.currentParent;
     this.currentParent = new ASTNode("letStatement");
     this.ast.addChild(this.currentParent, prevParent);
-    
+
     this.addHelper(TokenTypes.KEYWORD, "keyword"); // let
     this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // var name
+
+    if (this.tokenizer.peekNextToken() === "[") {
+      this.addHelper(TokenTypes.SYMBOL, "symbol"); // [
+      this.compileExpression();
+      this.addHelper(TokenTypes.SYMBOL, "symbol"); // ]
+    }
+
     this.addHelper(TokenTypes.SYMBOL, "symbol"); // =
 
     this.compileExpression();
-    
+
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // ;
+
     this.currentParent = prevParent;
   }
 
@@ -232,17 +256,65 @@ export default class CompilationEngine {
   /**
    * Compiles a `while` statement
    */
-  compileWhile(): void {}
+  compileWhile(): void {
+    const prevParent = this.currentParent;
+    this.currentParent = new ASTNode("whileStatement");
+    this.ast.addChild(this.currentParent, prevParent);
+
+    this.addHelper(TokenTypes.KEYWORD, "keyword"); // while
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+
+    this.compileExpression();
+
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // {
+
+    this.compileStatements();
+
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // }
+
+    this.currentParent = prevParent;
+  }
 
   /**
    * Compiles a `do` statement
    */
-  compileDo(): void {}
+  compileDo(): void {
+    const prevParent = this.currentParent;
+    this.currentParent = new ASTNode("doStatement");
+    this.ast.addChild(this.currentParent, prevParent);
+    
+    this.addHelper(TokenTypes.KEYWORD, "keyword"); // do
+    this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // name
+
+    if (this.tokenizer.peekNextToken() === ".") {
+      this.addHelper(TokenTypes.SYMBOL, "symbol"); // .
+      this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // name after .
+    }
+
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+
+    this.compileExpressionList()
+
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // ;
+
+    this.currentParent = prevParent;
+  }
 
   /**
    * Compiles a `return` statement
    */
-  compileReturn(): void {}
+  compileReturn(): void {
+    const prevParent = this.currentParent;
+    this.currentParent = new ASTNode("returnStatement");
+    this.ast.addChild(this.currentParent, prevParent);
+
+    this.addHelper(TokenTypes.KEYWORD, "keyword"); // return
+    this.addHelper(TokenTypes.SYMBOL, "symbol"); // ;
+
+    this.currentParent = prevParent;
+  }
 
   /**
    * Compiles an expression
@@ -251,9 +323,40 @@ export default class CompilationEngine {
     const prevParent = this.currentParent;
     this.currentParent = new ASTNode("expression");
     this.ast.addChild(this.currentParent, prevParent);
-    
-  
-    
+
+    this.compileTerm();
+
+    do {
+      const nextTok = this.tokenizer.peekNextToken();
+      if (
+        nextTok === "=" ||
+        nextTok === ">" ||
+        nextTok === "<" ||
+        nextTok === "&" ||
+        nextTok === "|" ||
+        nextTok === "+" ||
+        nextTok === "-" ||
+        nextTok === "*" ||
+        nextTok === "/"
+      ) {
+        if (nextTok === ">") {
+          this.tokenizer.advance();
+          this.ast.addChild(new ASTNode("symbol", "&gt;"), this.currentParent);
+        } else if (nextTok === "<") {
+          this.tokenizer.advance();
+          this.ast.addChild(new ASTNode("symbol", "&lt;"), this.currentParent);
+        } else if (nextTok === "&") {
+          this.tokenizer.advance();
+          this.ast.addChild(new ASTNode("symbol", "&amp;"), this.currentParent);
+        } else {
+          this.addHelper(TokenTypes.SYMBOL, "symbol");
+        }
+        this.compileTerm();
+      } else {
+        break;
+      }
+    } while (true);
+
     this.currentParent = prevParent;
   }
 
@@ -264,12 +367,78 @@ export default class CompilationEngine {
    * distinguish between the three possibilities. Any other token is not part of
    * this term and should not be advanced over.
    */
-  compileTerm(): void {}
+  compileTerm(): void {
+    const prevParent = this.currentParent;
+    this.currentParent = new ASTNode("term");
+    this.ast.addChild(this.currentParent, prevParent);
+
+    let nextTok = this.tokenizer.peekNextToken();
+    const nextTokType = this.tokenizer.tokenType(nextTok);
+
+    if (nextTokType === TokenTypes.IDENTIFIER) {
+      this.addHelper(TokenTypes.IDENTIFIER, "identifier");
+
+      nextTok = this.tokenizer.peekNextToken();
+
+      // .
+      if (nextTok === ".") {
+        this.addHelper(TokenTypes.SYMBOL, "symbol"); // .
+        this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // name after .
+        this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+        this.compileExpressionList();
+        this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
+      }
+
+      // [
+      if (nextTok === "[") {
+        this.addHelper(TokenTypes.SYMBOL, "symbol"); // [
+        this.compileExpression();
+        this.addHelper(TokenTypes.SYMBOL, "symbol"); // ]
+      }
+
+      // (
+    }
+
+    if (nextTokType === TokenTypes.INT_CONST) {
+      this.addHelper(TokenTypes.INT_CONST, "integerConstant");
+    } else if (nextTokType === TokenTypes.STRING_CONST) {
+      this.tokenizer.advance();
+      this.ast.addChild(
+        new ASTNode(
+          "stringConstant",
+          this.tokenizer.currentToken.replace(/^\"|\"$/g, "")
+        ),
+        this.currentParent
+      );
+    } else if (
+      nextTok === KeyWordTypes.TRUE ||
+      nextTok === KeyWordTypes.FALSE ||
+      nextTok === KeyWordTypes.NULL ||
+      nextTok === KeyWordTypes.THIS
+    ) {
+      this.addHelper(TokenTypes.KEYWORD, "keyword");
+    }
+
+    this.currentParent = prevParent;
+  }
 
   /**
    * Compiles a (possibly empty) comma-separated list of expressions. Returns the number of expressions in the list.
    */
   compileExpressionList(): number {
-    return -1;
+    const prevParent = this.currentParent;
+    this.currentParent = new ASTNode("expressionList");
+    this.ast.addChild(this.currentParent, prevParent);
+
+    
+
+    // TODO count
+    if (this.tokenizer.peekNextToken() !== ')') {
+      this.compileExpression();
+    }
+
+    this.currentParent = prevParent;
+
+    return -1; // TODO
   }
 }
