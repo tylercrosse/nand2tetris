@@ -163,6 +163,20 @@ describe('CompilationEngine', () => {
 "
 `);
 
+    engine = new CompilationEngine(`~exit`);
+    engine.compileExpression()
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+"<expression>
+  <term>
+    <symbol> ~ </symbol>
+    <term>
+      <identifier> exit </identifier>
+    </term>
+  </term>
+</expression>
+"
+`);
+
   engine = new CompilationEngine(`Square.new(0, 0, 30)`);
   engine.compileExpression()
   expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
@@ -599,6 +613,34 @@ describe('CompilationEngine', () => {
 `);
   })
 
+  test('compileWhile nested', () => {
+    const input = `
+    while (~exit) {
+      // waits for a key to be pressed
+      while (key = 0) {
+         let key = Keyboard.keyPressed();
+         do moveSquare();
+      }
+      if (key = 81)  { let exit = true; }     // q key
+      if (key = 90)  { do square.decSize(); } // z key
+      if (key = 88)  { do square.incSize(); } // x key
+      if (key = 131) { let direction = 1; }   // up arrow
+      if (key = 133) { let direction = 2; }   // down arrow
+      if (key = 130) { let direction = 3; }   // left arrow
+      if (key = 132) { let direction = 4; }   // right arrow
+
+      // waits for the key to be released
+      while (~(key = 0)) {
+         let key = Keyboard.keyPressed();
+         do moveSquare();
+      } 
+    } // while
+    `;
+    const engine = new CompilationEngine(input);
+    engine.compileWhile()
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot();
+  })
+
   test('compileDo', () => {
     let engine = new CompilationEngine(`do Output.println();`);
     engine.compileDo()
@@ -879,10 +921,10 @@ describe('CompilationEngine', () => {
             if (key = 132) { let direction = 4; }   // right arrow
    
             // waits for the key to be released
-            // while (~(key = 0)) {
-            //    let key = Keyboard.keyPressed();
-            //    do moveSquare();
-            // }
+            while (~(key = 0)) {
+               let key = Keyboard.keyPressed();
+               do moveSquare();
+            } 
         } // while
         return;
        }

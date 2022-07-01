@@ -96,12 +96,16 @@ export default class JackTokenizer {
    */
   tokenType(token: string = this.currentToken) {
     if (this.keywordRegExp.test(token)) {
+      this.keywordRegExp.lastIndex = 0; // reset regex
       return TokenTypes.KEYWORD;
     } else if (this.symbolRegExp.test(token)) {
+      this.symbolRegExp.lastIndex = 0; // reset regex
       return TokenTypes.SYMBOL;
     } else if (this.integerRegExp.test(token)) {
+      this.integerRegExp.lastIndex = 0; // reset regex
       return TokenTypes.INT_CONST;
     } else if (this.stringRegExp.test(token)) {
+      this.stringRegExp.lastIndex = 0; // reset regex
       return TokenTypes.STRING_CONST;
     } else {
       return TokenTypes.IDENTIFIER;

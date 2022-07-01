@@ -391,6 +391,7 @@ export default class CompilationEngine {
         nextTok === "+" ||
         nextTok === "-" ||
         nextTok === "*" ||
+        nextTok === "~" ||
         nextTok === "/"
       ) {
         if (nextTok === ">") {
