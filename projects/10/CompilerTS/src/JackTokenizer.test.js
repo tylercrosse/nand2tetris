@@ -81,4 +81,30 @@ class Main {
     // be more exhaustive
     expect(types).toMatchSnapshot();
   });
+
+  it("should be able to match symbols", () => {
+    const tokenizer = new JackTokenizer("");
+    const symbols = [
+      "{",
+      "}",
+      "(",
+      ")",
+      "[",
+      "]",
+      ".",
+      ",",
+      ";",
+      "+",
+      "-",
+      "*",
+      "/",
+      "&",
+      "|",
+      "<",
+      ">",
+      "=",
+      "~",
+    ];
+    expect(symbols.every((sym) => tokenizer.tokenType(sym))).toEqual(true);
+  });
 });
