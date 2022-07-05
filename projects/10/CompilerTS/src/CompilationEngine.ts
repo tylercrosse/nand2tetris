@@ -21,18 +21,18 @@ export default class CompilationEngine {
     this.tokenizer = new JackTokenizer(input);
   }
 
-  private addHelper(tokenType: TokenTypes, nodeType: string): void {
+  private addHelper(tokenType: string): void {
     this.tokenizer.advance();
     if (this.tokenizer.tokenType() !== tokenType) {
       // throw new CompilationError(nodeType);
     }
     this.ast.addChild(
-      new ASTNode(nodeType, this.tokenizer.currentToken),
+      new ASTNode(tokenType, this.tokenizer.currentToken),
       this.currentParent
     );
   }
 
-  complileTypeHelper(): void {
+  private complileTypeHelper(): void {
     const nextTok = this.tokenizer.peekNextToken();
 
     if (
@@ -41,11 +41,11 @@ export default class CompilationEngine {
       nextTok === KeyWordTypes.BOOLEAN ||
       nextTok === KeyWordTypes.VOID
     ) {
-      this.addHelper(TokenTypes.KEYWORD, "keyword");
+      this.addHelper(TokenTypes.KEYWORD);
     }
 
     if (this.tokenizer.tokenType(nextTok) === TokenTypes.IDENTIFIER) {
-      this.addHelper(TokenTypes.IDENTIFIER, "identifier");
+      this.addHelper(TokenTypes.IDENTIFIER);
     }
   }
 
@@ -62,13 +62,13 @@ export default class CompilationEngine {
     this.ast.addChild(this.currentParent);
     this.ast.addChild(new ASTNode("keyword", "class"));
 
-    this.addHelper(TokenTypes.IDENTIFIER, "identifier");
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // {
+    this.addHelper(TokenTypes.IDENTIFIER);
+    this.addHelper(TokenTypes.SYMBOL); // {
 
     this.compileClassVarDec();
     this.compileSubroutine();
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // }
+    this.addHelper(TokenTypes.SYMBOL); // }
   }
 
   /**
@@ -85,18 +85,18 @@ export default class CompilationEngine {
 
     this.currentParent = new ASTNode("classVarDec");
     this.ast.addChild(this.currentParent, prevParent);
-    this.addHelper(TokenTypes.KEYWORD, "keyword"); // field or static
+    this.addHelper(TokenTypes.KEYWORD); // field or static
 
     this.complileTypeHelper();
 
     do {
       if (this.tokenizer.peekNextToken() === ";") {
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // ;
+        this.addHelper(TokenTypes.SYMBOL); // ;
         break;
       } else if (this.tokenizer.peekNextToken() === ",") {
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // ,
+        this.addHelper(TokenTypes.SYMBOL); // ,
       }
-      this.addHelper(TokenTypes.IDENTIFIER, "identifier");
+      this.addHelper(TokenTypes.IDENTIFIER);
     } while (true);
 
     this.currentParent = prevParent;
@@ -124,15 +124,15 @@ export default class CompilationEngine {
 
     this.currentParent = new ASTNode("subroutineDec");
     this.ast.addChild(this.currentParent);
-    this.addHelper(TokenTypes.KEYWORD, "keyword"); // method | function | constructor
+    this.addHelper(TokenTypes.KEYWORD); // method | function | constructor
 
     this.complileTypeHelper();
-    this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // subroutine name
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+    this.addHelper(TokenTypes.IDENTIFIER); // subroutine name
+    this.addHelper(TokenTypes.SYMBOL); // (
 
     this.compileParameterList();
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
+    this.addHelper(TokenTypes.SYMBOL); // )
 
     this.compileSubroutineBody();
     this.currentParent = prevParent;
@@ -153,10 +153,10 @@ export default class CompilationEngine {
       if (this.tokenizer.peekNextToken() === ")") break;
       
       this.complileTypeHelper();
-      this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // parameter name
+      this.addHelper(TokenTypes.IDENTIFIER); // parameter name
       
       if (this.tokenizer.peekNextToken() === ",") {
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // ,
+        this.addHelper(TokenTypes.SYMBOL); // ,
       }
     } while (true);
 
@@ -171,12 +171,12 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("subroutineBody");
     this.ast.addChild(this.currentParent, prevParent);
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // {
+    this.addHelper(TokenTypes.SYMBOL); // {
 
     this.compileVarDec();
     this.compileStatements();
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // }
+    this.addHelper(TokenTypes.SYMBOL); // }
 
     this.currentParent = prevParent;
   }
@@ -191,11 +191,11 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("varDec");
     this.ast.addChild(this.currentParent, prevParent);
 
-    this.addHelper(TokenTypes.KEYWORD, "keyword"); // var
+    this.addHelper(TokenTypes.KEYWORD); // var
     this.complileTypeHelper(); // var type
 
     do {
-      this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // var name
+      this.addHelper(TokenTypes.IDENTIFIER); // var name
       this.tokenizer.advance();
       if (this.tokenizer.currentToken === ",") {
         this.ast.addChild(new ASTNode("symbol", ","), this.currentParent);
@@ -261,20 +261,20 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("letStatement");
     this.ast.addChild(this.currentParent, prevParent);
 
-    this.addHelper(TokenTypes.KEYWORD, "keyword"); // let
-    this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // var name
+    this.addHelper(TokenTypes.KEYWORD); // let
+    this.addHelper(TokenTypes.IDENTIFIER); // var name
 
     if (this.tokenizer.peekNextToken() === "[") {
-      this.addHelper(TokenTypes.SYMBOL, "symbol"); // [
+      this.addHelper(TokenTypes.SYMBOL); // [
       this.compileExpression();
-      this.addHelper(TokenTypes.SYMBOL, "symbol"); // ]
+      this.addHelper(TokenTypes.SYMBOL); // ]
     }
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // =
+    this.addHelper(TokenTypes.SYMBOL); // =
 
     this.compileExpression();
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // ;
+    this.addHelper(TokenTypes.SYMBOL); // ;
 
     this.currentParent = prevParent;
   }
@@ -287,19 +287,19 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("ifStatement");
     this.ast.addChild(this.currentParent, prevParent);
 
-    this.addHelper(TokenTypes.KEYWORD, "keyword"); // if
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+    this.addHelper(TokenTypes.KEYWORD); // if
+    this.addHelper(TokenTypes.SYMBOL); // (
     this.compileExpression();
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // {
+    this.addHelper(TokenTypes.SYMBOL); // )
+    this.addHelper(TokenTypes.SYMBOL); // {
     this.compileStatements();
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // }
+    this.addHelper(TokenTypes.SYMBOL); // }
 
     if (this.tokenizer.peekNextToken() === KeyWordTypes.ELSE) {
-      this.addHelper(TokenTypes.KEYWORD, "keyword"); // else
-      this.addHelper(TokenTypes.SYMBOL, "symbol"); // {
+      this.addHelper(TokenTypes.KEYWORD); // else
+      this.addHelper(TokenTypes.SYMBOL); // {
       this.compileStatements();
-      this.addHelper(TokenTypes.SYMBOL, "symbol"); // }
+      this.addHelper(TokenTypes.SYMBOL); // }
     }
 
     this.currentParent = prevParent;
@@ -313,17 +313,17 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("whileStatement");
     this.ast.addChild(this.currentParent, prevParent);
 
-    this.addHelper(TokenTypes.KEYWORD, "keyword"); // while
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+    this.addHelper(TokenTypes.KEYWORD); // while
+    this.addHelper(TokenTypes.SYMBOL); // (
 
     this.compileExpression();
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // {
+    this.addHelper(TokenTypes.SYMBOL); // )
+    this.addHelper(TokenTypes.SYMBOL); // {
 
     this.compileStatements();
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // }
+    this.addHelper(TokenTypes.SYMBOL); // }
 
     this.currentParent = prevParent;
   }
@@ -336,20 +336,20 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("doStatement");
     this.ast.addChild(this.currentParent, prevParent);
 
-    this.addHelper(TokenTypes.KEYWORD, "keyword"); // do
-    this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // name
+    this.addHelper(TokenTypes.KEYWORD); // do
+    this.addHelper(TokenTypes.IDENTIFIER); // name
 
     if (this.tokenizer.peekNextToken() === ".") {
-      this.addHelper(TokenTypes.SYMBOL, "symbol"); // .
-      this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // name after .
+      this.addHelper(TokenTypes.SYMBOL); // .
+      this.addHelper(TokenTypes.IDENTIFIER); // name after .
     }
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+    this.addHelper(TokenTypes.SYMBOL); // (
 
     this.compileExpressionList();
 
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // ;
+    this.addHelper(TokenTypes.SYMBOL); // )
+    this.addHelper(TokenTypes.SYMBOL); // ;
 
     this.currentParent = prevParent;
   }
@@ -362,12 +362,12 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("returnStatement");
     this.ast.addChild(this.currentParent, prevParent);
 
-    this.addHelper(TokenTypes.KEYWORD, "keyword"); // return
+    this.addHelper(TokenTypes.KEYWORD); // return
 
     if (this.tokenizer.peekNextToken() !== ";") {
       this.compileExpression();
     }
-    this.addHelper(TokenTypes.SYMBOL, "symbol"); // ;
+    this.addHelper(TokenTypes.SYMBOL); // ;
 
     this.currentParent = prevParent;
   }
@@ -406,7 +406,7 @@ export default class CompilationEngine {
           this.tokenizer.advance();
           this.ast.addChild(new ASTNode("symbol", "&amp;"), this.currentParent);
         } else {
-          this.addHelper(TokenTypes.SYMBOL, "symbol");
+          this.addHelper(TokenTypes.SYMBOL);
         }
         this.compileTerm();
       } else {
@@ -434,34 +434,34 @@ export default class CompilationEngine {
 
     // (
     if (nextTok === "(") {
-      this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+      this.addHelper(TokenTypes.SYMBOL); // (
       this.compileExpression();
-      this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
+      this.addHelper(TokenTypes.SYMBOL); // )
     }
 
     if (nextTokType === TokenTypes.IDENTIFIER) {
-      this.addHelper(TokenTypes.IDENTIFIER, "identifier");
+      this.addHelper(TokenTypes.IDENTIFIER);
 
       nextTok = this.tokenizer.peekNextToken();
       nextTokType = this.tokenizer.tokenType(nextTok);
 
       // .
       if (nextTok === ".") {
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // .
-        this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // name after .
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // (
+        this.addHelper(TokenTypes.SYMBOL); // .
+        this.addHelper(TokenTypes.IDENTIFIER); // name after .
+        this.addHelper(TokenTypes.SYMBOL); // (
         this.compileExpressionList();
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // )
+        this.addHelper(TokenTypes.SYMBOL); // )
       }
 
       // [
       if (nextTok === "[") {
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // [
+        this.addHelper(TokenTypes.SYMBOL); // [
         this.compileExpression();
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // ]
+        this.addHelper(TokenTypes.SYMBOL); // ]
       }
     } else if (nextTokType === TokenTypes.INT_CONST) {
-      this.addHelper(TokenTypes.INT_CONST, "integerConstant");
+      this.addHelper(TokenTypes.INT_CONST);
     } else if (nextTokType === TokenTypes.STRING_CONST) {
       this.tokenizer.advance();
       this.ast.addChild(
@@ -477,9 +477,9 @@ export default class CompilationEngine {
       nextTok === KeyWordTypes.NULL ||
       nextTok === KeyWordTypes.THIS
     ) {
-      this.addHelper(TokenTypes.KEYWORD, "keyword");
+      this.addHelper(TokenTypes.KEYWORD);
     } else if (nextTok === "-" || nextTok === "~") { // unary
-      this.addHelper(TokenTypes.SYMBOL, "symbol"); // - or ~
+      this.addHelper(TokenTypes.SYMBOL); // - or ~
       this.compileTerm();
     }
 
@@ -500,7 +500,7 @@ export default class CompilationEngine {
       
       this.compileExpression();
       if (this.tokenizer.peekNextToken() === ",") {
-        this.addHelper(TokenTypes.SYMBOL, "symbol"); // ,
+        this.addHelper(TokenTypes.SYMBOL); // ,
       }
       counter += 1;
     } while (true);

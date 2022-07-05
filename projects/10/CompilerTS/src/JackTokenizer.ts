@@ -1,9 +1,9 @@
 export const TokenTypes = {
-  KEYWORD: "KEYWORD",
-  SYMBOL: "SYMBOL",
-  IDENTIFIER: "IDENTIFIER",
-  INT_CONST: "INT_CONST",
-  STRING_CONST: "STRING_CONST",
+  KEYWORD: "keyword",
+  SYMBOL: "symbol",
+  IDENTIFIER: "identifier",
+  INT_CONST: "integerConstant",
+  STRING_CONST: "stringConstant",
 };
 export const KeyWordTypes = {
   CLASS: "class",
