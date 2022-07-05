@@ -31,7 +31,7 @@ describe('AST', () => {
     
     ast.addChild(new ASTNode('symbol', '}'))
 
-    expect(ast.treeTraverser(ast.root)).toMatchInlineSnapshot(`
+    expect(ast.xmlStringBuilder(ast.root)).toMatchInlineSnapshot(`
 "<class>
   <keyword> class </keyword>
   <identifier> Main </identifier>

@@ -4,7 +4,7 @@ describe("CompilationEngine", () => {
   test("compileParameterList", () => {
     const engine = new CompilationEngine(`int Ax, int Ay, int Asize)`);
     engine.compileParameterList();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<parameterList>
   <keyword> int </keyword>
   <identifier> Ax </identifier>
@@ -29,7 +29,7 @@ describe("CompilationEngine", () => {
     `;
     const engine = new CompilationEngine(input1);
     engine.compileSubroutine();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<subroutineDec>
   <keyword> method </keyword>
   <keyword> void </keyword>
@@ -90,7 +90,7 @@ describe("CompilationEngine", () => {
     `;
     let engine = new CompilationEngine(input1);
     engine.compileSubroutine();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<subroutineDec>
   <keyword> constructor </keyword>
   <identifier> SquareGame </identifier>
@@ -151,13 +151,13 @@ describe("CompilationEngine", () => {
     `;
     engine = new CompilationEngine(input2);
     engine.compileSubroutine();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot();
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchSnapshot();
   });
 
   test("compileExpression", () => {
     let engine = new CompilationEngine(`i < length`);
     engine.compileExpression();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
     <identifier> i </identifier>
@@ -172,7 +172,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`size - 2`);
     engine.compileExpression();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
     <identifier> size </identifier>
@@ -187,7 +187,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`i * (-j);`);
     engine.compileExpression();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
     <identifier> i </identifier>
@@ -211,7 +211,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`~exit`);
     engine.compileExpression();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
     <symbol> ~ </symbol>
@@ -225,7 +225,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`Square.new(0, 0, 30)`);
     engine.compileExpression();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
     <identifier> Square </identifier>
@@ -261,7 +261,7 @@ describe("CompilationEngine", () => {
   test("compileTerm", () => {
     let engine = new CompilationEngine(`0`);
     engine.compileTerm();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<term>
   <integerConstant> 0 </integerConstant>
 </term>
@@ -270,7 +270,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`Array.new(length);`);
     engine.compileTerm();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<term>
   <identifier> Array </identifier>
   <symbol> . </symbol>
@@ -290,7 +290,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`Keyboard.readInt("HOW MANY NUMBERS? ");`);
     engine.compileTerm();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<term>
   <identifier> Keyboard </identifier>
   <symbol> . </symbol>
@@ -312,7 +312,7 @@ describe("CompilationEngine", () => {
   test("compileLet", () => {
     let engine = new CompilationEngine(`let a = Array.new(length);`);
     engine.compileLet();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<letStatement>
   <keyword> let </keyword>
   <identifier> a </identifier>
@@ -340,7 +340,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`let sum = sum + a[i];`);
     engine.compileLet();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<letStatement>
   <keyword> let </keyword>
   <identifier> sum </identifier>
@@ -370,7 +370,7 @@ describe("CompilationEngine", () => {
       `let a[i] = Keyboard.readInt("ENTER THE NEXT NUMBER: ");`
     );
     engine.compileLet();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<letStatement>
   <keyword> let </keyword>
   <identifier> a </identifier>
@@ -409,7 +409,7 @@ describe("CompilationEngine", () => {
       `if (direction) { do square.moveUp(); }`
     );
     engine.compileIf();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<ifStatement>
   <keyword> if </keyword>
   <symbol> ( </symbol>
@@ -455,7 +455,7 @@ describe("CompilationEngine", () => {
 
     const engine = new CompilationEngine(input2);
     engine.compileIf();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<ifStatement>
   <keyword> if </keyword>
   <symbol> ( </symbol>
@@ -596,7 +596,7 @@ describe("CompilationEngine", () => {
 }`;
     let engine = new CompilationEngine(input);
     engine.compileWhile();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<whileStatement>
   <keyword> while </keyword>
   <symbol> ( </symbol>
@@ -688,13 +688,13 @@ describe("CompilationEngine", () => {
     `;
     const engine = new CompilationEngine(input);
     engine.compileWhile();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot();
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchSnapshot();
   });
 
   test("compileDo", () => {
     let engine = new CompilationEngine(`do Output.println();`);
     engine.compileDo();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<doStatement>
   <keyword> do </keyword>
   <identifier> Output </identifier>
@@ -713,7 +713,7 @@ describe("CompilationEngine", () => {
       `do Output.printString("THE AVERAGE IS: ");`
     );
     engine.compileDo();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<doStatement>
   <keyword> do </keyword>
   <identifier> Output </identifier>
@@ -735,7 +735,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`do Output.printInt(sum / length);`);
     engine.compileDo();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<doStatement>
   <keyword> do </keyword>
   <identifier> Output </identifier>
@@ -763,7 +763,7 @@ describe("CompilationEngine", () => {
   test("compileClassVarDec", () => {
     let engine = new CompilationEngine(`field Square square;`);
     engine.compileClassVarDec();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<classVarDec>
   <keyword> field </keyword>
   <identifier> Square </identifier>
@@ -775,7 +775,7 @@ describe("CompilationEngine", () => {
 
     engine = new CompilationEngine(`field int direction;`);
     engine.compileClassVarDec();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchInlineSnapshot(`
 "<classVarDec>
   <keyword> field </keyword>
   <keyword> int </keyword>
@@ -830,7 +830,7 @@ describe("CompilationEngine", () => {
 
     const engine = new CompilationEngine(input1);
     engine.compileClass();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot(
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchSnapshot(
       "ArrayTest/Main.jack"
     );
   });
@@ -900,7 +900,7 @@ describe("CompilationEngine", () => {
 
     const engine = new CompilationEngine(input2);
     engine.compileClass();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot(
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchSnapshot(
       "ExpressionLessSquare/SquareGame.jack"
     );
   });
@@ -1021,7 +1021,7 @@ describe("CompilationEngine", () => {
 
     const engine = new CompilationEngine(input3);
     engine.compileClass();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot(
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchSnapshot(
       "Square/Square.jack"
     );
   });
@@ -1110,7 +1110,7 @@ describe("CompilationEngine", () => {
 
     const engine = new CompilationEngine(input3);
     engine.compileClass();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot(
+    expect(engine.ast.xmlStringBuilder(engine.ast.root)).toMatchSnapshot(
       "Square/SquareGame.jack"
     );
   });
