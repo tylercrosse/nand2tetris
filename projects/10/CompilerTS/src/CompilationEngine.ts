@@ -89,11 +89,12 @@ export default class CompilationEngine {
 
     this.complileTypeHelper();
 
-    // TODO something with commas?
     do {
       if (this.tokenizer.peekNextToken() === ";") {
         this.addHelper(TokenTypes.SYMBOL, "symbol"); // ;
         break;
+      } else if (this.tokenizer.peekNextToken() === ",") {
+        this.addHelper(TokenTypes.SYMBOL, "symbol"); // ,
       }
       this.addHelper(TokenTypes.IDENTIFIER, "identifier");
     } while (true);
@@ -148,16 +149,17 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("parameterList");
     this.ast.addChild(this.currentParent, prevParent);
 
-    // TODO
-    // do {
-    //   if (this.tokenizer.peekNextToken() === ")") break;
-    //   this.tokenizer.advance();
-    //   // this.addHelper(TokenTypes.KEYWORD, "keyword");
-    //   // this.addHelper(TokenTypes.IDENTIFIER, "identifier");
-    //   // if (this.tokenizer.peekNextToken() === ",") {
-    //   //   this.addHelper(TokenTypes.SYMBOL, "symbol");
-    //   // }
-    // } while (true);
+    do {
+      if (this.tokenizer.peekNextToken() === ")") break;
+      
+      this.complileTypeHelper();
+      this.addHelper(TokenTypes.IDENTIFIER, "identifier"); // parameter name
+      
+      if (this.tokenizer.peekNextToken() === ",") {
+        this.addHelper(TokenTypes.SYMBOL, "symbol"); // ,
+      }
+    } while (true);
+
     this.currentParent = prevParent;
   }
 
@@ -458,16 +460,14 @@ export default class CompilationEngine {
         this.compileExpression();
         this.addHelper(TokenTypes.SYMBOL, "symbol"); // ]
       }
-    }
-
-    if (nextTokType === TokenTypes.INT_CONST) {
+    } else if (nextTokType === TokenTypes.INT_CONST) {
       this.addHelper(TokenTypes.INT_CONST, "integerConstant");
     } else if (nextTokType === TokenTypes.STRING_CONST) {
       this.tokenizer.advance();
       this.ast.addChild(
         new ASTNode(
           "stringConstant",
-          this.tokenizer.currentToken.replace(/^\"|\"$/g, "")
+          this.tokenizer.currentToken.replace(/^\"|\"$/g, "") // remove quotes
         ),
         this.currentParent
       );
@@ -478,7 +478,7 @@ export default class CompilationEngine {
       nextTok === KeyWordTypes.THIS
     ) {
       this.addHelper(TokenTypes.KEYWORD, "keyword");
-    } else if (nextTok === "-" || nextTok === "~") {
+    } else if (nextTok === "-" || nextTok === "~") { // unary
       this.addHelper(TokenTypes.SYMBOL, "symbol"); // - or ~
       this.compileTerm();
     }

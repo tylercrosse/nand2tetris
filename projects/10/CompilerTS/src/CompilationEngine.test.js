@@ -1,7 +1,25 @@
-import CompilationEngine from './CompilationEngine'
+import CompilationEngine from "./CompilationEngine";
 
-describe('CompilationEngine', () => {
-  test('compileSubroutine method', () => {
+describe("CompilationEngine", () => {
+  test("compileParameterList", () => {
+    const engine = new CompilationEngine(`int Ax, int Ay, int Asize)`);
+    engine.compileParameterList();
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+"<parameterList>
+  <keyword> int </keyword>
+  <identifier> Ax </identifier>
+  <symbol> , </symbol>
+  <keyword> int </keyword>
+  <identifier> Ay </identifier>
+  <symbol> , </symbol>
+  <keyword> int </keyword>
+  <identifier> Asize </identifier>
+</parameterList>
+"
+`);
+  });
+
+  test("compileSubroutine method", () => {
     const input1 = `
     method void dispose() {
       do square.dispose();
@@ -10,7 +28,7 @@ describe('CompilationEngine', () => {
     }
     `;
     const engine = new CompilationEngine(input1);
-    engine.compileSubroutine()
+    engine.compileSubroutine();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<subroutineDec>
   <keyword> method </keyword>
@@ -61,17 +79,17 @@ describe('CompilationEngine', () => {
 "
 `);
   });
-  
-  test('compileSubroutine constructor', () => {
-    const input2 = `
+
+  test("compileSubroutine constructor", () => {
+    const input1 = `
     constructor SquareGame new() {
       let square = square;
       let direction = direction;
       return square;
     }
     `;
-    const engine = new CompilationEngine(input2);
-    engine.compileSubroutine()
+    let engine = new CompilationEngine(input1);
+    engine.compileSubroutine();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<subroutineDec>
   <keyword> constructor </keyword>
@@ -121,11 +139,24 @@ describe('CompilationEngine', () => {
 </subroutineDec>
 "
 `);
-  })
-  
-  test('compileExpression', () => {
+
+    const input2 = `
+    constructor Square new(int Ax, int Ay, int Asize) {
+      let x = Ax;
+      let y = Ay;
+      let size = Asize;
+      do draw();
+      return x;
+    }
+    `;
+    engine = new CompilationEngine(input2);
+    engine.compileSubroutine();
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot();
+  });
+
+  test("compileExpression", () => {
     let engine = new CompilationEngine(`i < length`);
-    engine.compileExpression()
+    engine.compileExpression();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
@@ -139,8 +170,23 @@ describe('CompilationEngine', () => {
 "
 `);
 
+    engine = new CompilationEngine(`size - 2`);
+    engine.compileExpression();
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+"<expression>
+  <term>
+    <identifier> size </identifier>
+  </term>
+  <symbol> - </symbol>
+  <term>
+    <integerConstant> 2 </integerConstant>
+  </term>
+</expression>
+"
+`);
+
     engine = new CompilationEngine(`i * (-j);`);
-    engine.compileExpression()
+    engine.compileExpression();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
@@ -164,7 +210,7 @@ describe('CompilationEngine', () => {
 `);
 
     engine = new CompilationEngine(`~exit`);
-    engine.compileExpression()
+    engine.compileExpression();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
@@ -177,9 +223,9 @@ describe('CompilationEngine', () => {
 "
 `);
 
-  engine = new CompilationEngine(`Square.new(0, 0, 30)`);
-  engine.compileExpression()
-  expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
+    engine = new CompilationEngine(`Square.new(0, 0, 30)`);
+    engine.compileExpression();
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<expression>
   <term>
     <identifier> Square </identifier>
@@ -210,11 +256,11 @@ describe('CompilationEngine', () => {
 </expression>
 "
 `);
-  })
-  
-  test('compileTerm', () => {
+  });
+
+  test("compileTerm", () => {
     let engine = new CompilationEngine(`0`);
-    engine.compileTerm()
+    engine.compileTerm();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<term>
   <integerConstant> 0 </integerConstant>
@@ -223,7 +269,7 @@ describe('CompilationEngine', () => {
 `);
 
     engine = new CompilationEngine(`Array.new(length);`);
-    engine.compileTerm()
+    engine.compileTerm();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<term>
   <identifier> Array </identifier>
@@ -243,7 +289,7 @@ describe('CompilationEngine', () => {
 `);
 
     engine = new CompilationEngine(`Keyboard.readInt("HOW MANY NUMBERS? ");`);
-    engine.compileTerm()
+    engine.compileTerm();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<term>
   <identifier> Keyboard </identifier>
@@ -261,11 +307,11 @@ describe('CompilationEngine', () => {
 </term>
 "
 `);
-  })
+  });
 
-  test('compileLet', () => {
+  test("compileLet", () => {
     let engine = new CompilationEngine(`let a = Array.new(length);`);
-    engine.compileLet()
+    engine.compileLet();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<letStatement>
   <keyword> let </keyword>
@@ -291,9 +337,9 @@ describe('CompilationEngine', () => {
 </letStatement>
 "
 `);
-    
+
     engine = new CompilationEngine(`let sum = sum + a[i];`);
-    engine.compileLet()
+    engine.compileLet();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<letStatement>
   <keyword> let </keyword>
@@ -319,9 +365,11 @@ describe('CompilationEngine', () => {
 </letStatement>
 "
 `);
-    
-    engine = new CompilationEngine(`let a[i] = Keyboard.readInt("ENTER THE NEXT NUMBER: ");`);
-    engine.compileLet()
+
+    engine = new CompilationEngine(
+      `let a[i] = Keyboard.readInt("ENTER THE NEXT NUMBER: ");`
+    );
+    engine.compileLet();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<letStatement>
   <keyword> let </keyword>
@@ -356,9 +404,11 @@ describe('CompilationEngine', () => {
 `);
   });
 
-  test('compileIf', () => {
-    let engine = new CompilationEngine(`if (direction) { do square.moveUp(); }`);
-    engine.compileIf()
+  test("compileIf", () => {
+    let engine = new CompilationEngine(
+      `if (direction) { do square.moveUp(); }`
+    );
+    engine.compileIf();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<ifStatement>
   <keyword> if </keyword>
@@ -389,7 +439,7 @@ describe('CompilationEngine', () => {
 `);
   });
 
-  test('compileIfElse', () => {
+  test("compileIfElse", () => {
     const input2 = `
     if (false) {
       let s = "string constant";
@@ -404,7 +454,7 @@ describe('CompilationEngine', () => {
     `;
 
     const engine = new CompilationEngine(input2);
-    engine.compileIf()
+    engine.compileIf();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<ifStatement>
   <keyword> if </keyword>
@@ -539,13 +589,13 @@ describe('CompilationEngine', () => {
 `);
   });
 
-  test('compileWhile', () => {
+  test("compileWhile", () => {
     const input = `while (i < length) {
     let a[i] = Keyboard.readInt("ENTER THE NEXT NUMBER: ");
     let i = i + 1;
-}`
+}`;
     let engine = new CompilationEngine(input);
-    engine.compileWhile()
+    engine.compileWhile();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<whileStatement>
   <keyword> while </keyword>
@@ -611,9 +661,9 @@ describe('CompilationEngine', () => {
 </whileStatement>
 "
 `);
-  })
+  });
 
-  test('compileWhile nested', () => {
+  test("compileWhile nested", () => {
     const input = `
     while (~exit) {
       // waits for a key to be pressed
@@ -637,13 +687,13 @@ describe('CompilationEngine', () => {
     } // while
     `;
     const engine = new CompilationEngine(input);
-    engine.compileWhile()
+    engine.compileWhile();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot();
-  })
+  });
 
-  test('compileDo', () => {
+  test("compileDo", () => {
     let engine = new CompilationEngine(`do Output.println();`);
-    engine.compileDo()
+    engine.compileDo();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<doStatement>
   <keyword> do </keyword>
@@ -658,9 +708,11 @@ describe('CompilationEngine', () => {
 </doStatement>
 "
 `);
-    
-    engine = new CompilationEngine(`do Output.printString("THE AVERAGE IS: ");`);
-    engine.compileDo()
+
+    engine = new CompilationEngine(
+      `do Output.printString("THE AVERAGE IS: ");`
+    );
+    engine.compileDo();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<doStatement>
   <keyword> do </keyword>
@@ -679,10 +731,10 @@ describe('CompilationEngine', () => {
   <symbol> ; </symbol>
 </doStatement>
 "
-`)
-    
+`);
+
     engine = new CompilationEngine(`do Output.printInt(sum / length);`);
-    engine.compileDo()
+    engine.compileDo();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<doStatement>
   <keyword> do </keyword>
@@ -705,12 +757,12 @@ describe('CompilationEngine', () => {
   <symbol> ; </symbol>
 </doStatement>
 "
-`)
+`);
   });
 
-  test('compileClassVarDec', () => {
+  test("compileClassVarDec", () => {
     let engine = new CompilationEngine(`field Square square;`);
-    engine.compileClassVarDec()
+    engine.compileClassVarDec();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<classVarDec>
   <keyword> field </keyword>
@@ -722,7 +774,7 @@ describe('CompilationEngine', () => {
 `);
 
     engine = new CompilationEngine(`field int direction;`);
-    engine.compileClassVarDec()
+    engine.compileClassVarDec();
     expect(engine.ast.treeTraverser(engine.ast.root)).toMatchInlineSnapshot(`
 "<classVarDec>
   <keyword> field </keyword>
@@ -732,9 +784,9 @@ describe('CompilationEngine', () => {
 </classVarDec>
 "
 `);
-  })
+  });
 
-  test('compileClass ArrayTest', () => {
+  test("compileClass ArrayTest", () => {
     const input1 = `
     // This file is part of www.nand2tetris.org
     // and the book "The Elements of Computing Systems"
@@ -778,10 +830,12 @@ describe('CompilationEngine', () => {
 
     const engine = new CompilationEngine(input1);
     engine.compileClass();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot('ArrayTest/Main.jack')
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot(
+      "ArrayTest/Main.jack"
+    );
   });
 
-  test('compileClass ExpressionLessSquare', () => {
+  test("compileClass ExpressionLessSquare", () => {
     const input2 = `
     // This file is part of www.nand2tetris.org
     // and the book "The Elements of Computing Systems"
@@ -842,14 +896,137 @@ describe('CompilationEngine', () => {
           return;
         }
     }
-    `
+    `;
 
     const engine = new CompilationEngine(input2);
     engine.compileClass();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot('ExpressionLessSquare/SquareGame.jack')
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot(
+      "ExpressionLessSquare/SquareGame.jack"
+    );
   });
 
-  test('compileClass SquareGame', () => {
+  test("compileClass Square", () => {
+    const input3 = `
+    // This file is part of www.nand2tetris.org
+    // and the book "The Elements of Computing Systems"
+    // by Nisan and Schocken, MIT Press.
+    // File name: projects/10/Square/Square.jack
+
+    // (same as projects/09/Square/Square.jack)
+
+    /** Implements a graphical square. */
+    class Square {
+
+      field int x, y; // screen location of the square's top-left corner
+      field int size; // length of this square, in pixels
+
+      /** Constructs a new square with a given location and size. */
+      constructor Square new(int Ax, int Ay, int Asize) {
+          let x = Ax;
+          let y = Ay;
+          let size = Asize;
+          do draw();
+          return this;
+      }
+
+      /** Disposes this square. */
+      method void dispose() {
+          do Memory.deAlloc(this);
+          return;
+      }
+
+      /** Draws the square on the screen. */
+      method void draw() {
+          do Screen.setColor(true);
+          do Screen.drawRectangle(x, y, x + size, y + size);
+          return;
+      }
+
+      /** Erases the square from the screen. */
+      method void erase() {
+          do Screen.setColor(false);
+          do Screen.drawRectangle(x, y, x + size, y + size);
+          return;
+      }
+
+        /** Increments the square size by 2 pixels. */
+      method void incSize() {
+          if (((y + size) < 254) & ((x + size) < 510)) {
+            do erase();
+            let size = size + 2;
+            do draw();
+          }
+          return;
+      }
+
+      /** Decrements the square size by 2 pixels. */
+      method void decSize() {
+          if (size > 2) {
+            do erase();
+            let size = size - 2;
+            do draw();
+          }
+          return;
+      }
+
+      /** Moves the square up by 2 pixels. */
+      method void moveUp() {
+          if (y > 1) {
+            do Screen.setColor(false);
+            do Screen.drawRectangle(x, (y + size) - 1, x + size, y + size);
+            let y = y - 2;
+            do Screen.setColor(true);
+            do Screen.drawRectangle(x, y, x + size, y + 1);
+          }
+          return;
+      }
+
+      /** Moves the square down by 2 pixels. */
+      method void moveDown() {
+          if ((y + size) < 254) {
+            do Screen.setColor(false);
+            do Screen.drawRectangle(x, y, x + size, y + 1);
+            let y = y + 2;
+            do Screen.setColor(true);
+            do Screen.drawRectangle(x, (y + size) - 1, x + size, y + size);
+          }
+          return;
+      }
+
+      /** Moves the square left by 2 pixels. */
+      method void moveLeft() {
+          if (x > 1) {
+            do Screen.setColor(false);
+            do Screen.drawRectangle((x + size) - 1, y, x + size, y + size);
+            let x = x - 2;
+            do Screen.setColor(true);
+            do Screen.drawRectangle(x, y, x + 1, y + size);
+          }
+          return;
+      }
+
+      /** Moves the square right by 2 pixels. */
+      method void moveRight() {
+          if ((x + size) < 510) {
+            do Screen.setColor(false);
+            do Screen.drawRectangle(x, y, x + 1, y + size);
+            let x = x + 2;
+            do Screen.setColor(true);
+            do Screen.drawRectangle((x + size) - 1, y, x + size, y + size);
+          }
+          return;
+      }
+    }
+    `;
+
+    const engine = new CompilationEngine(input3);
+    engine.compileClass();
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot(
+      "Square/Square.jack"
+    );
+  });
+
+  test("compileClass SquareGame", () => {
     const input3 = `
     // This file is part of www.nand2tetris.org
     // and the book "The Elements of Computing Systems"
@@ -929,10 +1106,12 @@ describe('CompilationEngine', () => {
         return;
        }
     }
-    `
+    `;
 
     const engine = new CompilationEngine(input3);
     engine.compileClass();
-    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot('Square/SquareGame.jack')
-  })
-})
+    expect(engine.ast.treeTraverser(engine.ast.root)).toMatchSnapshot(
+      "Square/SquareGame.jack"
+    );
+  });
+});

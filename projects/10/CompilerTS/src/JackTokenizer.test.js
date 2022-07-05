@@ -73,7 +73,7 @@ class Main {
       TokenTypes.IDENTIFIER,
       TokenTypes.SYMBOL,
       TokenTypes.KEYWORD,
-      TokenTypes.IDENTIFIER,
+      TokenTypes.KEYWORD,
       TokenTypes.IDENTIFIER,
       TokenTypes.SYMBOL,
     ]);
