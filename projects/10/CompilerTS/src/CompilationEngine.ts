@@ -21,10 +21,15 @@ export default class CompilationEngine {
     this.tokenizer = new JackTokenizer(input);
   }
 
+  /**
+   * Adds the next token. 
+   * Advances the tokenizer and creates a new ASTNode.
+   * @param tokenType a valid token type
+   */
   private addHelper(tokenType: string): void {
     this.tokenizer.advance();
     if (this.tokenizer.tokenType() !== tokenType) {
-      // throw new CompilationError(nodeType);
+      // throw new CompilationError(tokenType);
     }
     this.ast.addChild(
       new ASTNode(tokenType, this.tokenizer.currentToken),
@@ -33,18 +38,18 @@ export default class CompilationEngine {
   }
 
   private complileTypeHelper(): void {
-    const nextTok = this.tokenizer.peekNextToken();
+    const nextTkn = this.tokenizer.peekNextToken();
 
     if (
-      nextTok === KeyWordTypes.INT ||
-      nextTok === KeyWordTypes.CHAR ||
-      nextTok === KeyWordTypes.BOOLEAN ||
-      nextTok === KeyWordTypes.VOID
+      nextTkn === KeyWordTypes.INT ||
+      nextTkn === KeyWordTypes.CHAR ||
+      nextTkn === KeyWordTypes.BOOLEAN ||
+      nextTkn === KeyWordTypes.VOID
     ) {
       this.addHelper(TokenTypes.KEYWORD);
     }
 
-    if (this.tokenizer.tokenType(nextTok) === TokenTypes.IDENTIFIER) {
+    if (this.tokenizer.tokenType(nextTkn) === TokenTypes.IDENTIFIER) {
       this.addHelper(TokenTypes.IDENTIFIER);
     }
   }
@@ -78,8 +83,8 @@ export default class CompilationEngine {
     const prevParent = this.currentParent;
 
     // end of variable declariation - base case
-    const nextTok = this.tokenizer.peekNextToken();
-    if (nextTok !== KeyWordTypes.STATIC && nextTok !== KeyWordTypes.FIELD) {
+    const nextTkn = this.tokenizer.peekNextToken();
+    if (nextTkn !== KeyWordTypes.STATIC && nextTkn !== KeyWordTypes.FIELD) {
       return;
     }
 
@@ -112,12 +117,12 @@ export default class CompilationEngine {
     const prevParent = this.currentParent;
 
     // end of subroutine - base case
-    const nextTok = this.tokenizer.peekNextToken();
+    const nextTkn = this.tokenizer.peekNextToken();
     if (
-      nextTok === "}" ||
-      (nextTok !== KeyWordTypes.METHOD &&
-        nextTok !== KeyWordTypes.FUNCTION &&
-        nextTok !== KeyWordTypes.CONSTRUCTOR)
+      nextTkn === "}" ||
+      (nextTkn !== KeyWordTypes.METHOD &&
+        nextTkn !== KeyWordTypes.FUNCTION &&
+        nextTkn !== KeyWordTypes.CONSTRUCTOR)
     ) {
       return;
     }
@@ -248,7 +253,7 @@ export default class CompilationEngine {
         this.compileReturn();
         break;
       default:
-      // throw new CompilationError('let|if|while|do|return'); // TODO
+        // throw new CompilationError('let|if|while|do|return');
     }
     this.compileStatement();
   }
@@ -383,26 +388,26 @@ export default class CompilationEngine {
     this.compileTerm();
 
     do {
-      const nextTok = this.tokenizer.peekNextToken();
+      const nextTkn = this.tokenizer.peekNextToken();
       if (
-        nextTok === "=" ||
-        nextTok === ">" ||
-        nextTok === "<" ||
-        nextTok === "&" ||
-        nextTok === "|" ||
-        nextTok === "+" ||
-        nextTok === "-" ||
-        nextTok === "*" ||
-        nextTok === "~" ||
-        nextTok === "/"
+        nextTkn === "=" ||
+        nextTkn === ">" ||
+        nextTkn === "<" ||
+        nextTkn === "&" ||
+        nextTkn === "|" ||
+        nextTkn === "+" ||
+        nextTkn === "-" ||
+        nextTkn === "*" ||
+        nextTkn === "~" ||
+        nextTkn === "/"
       ) {
-        if (nextTok === ">") {
+        if (nextTkn === ">") {
           this.tokenizer.advance();
           this.ast.addChild(new ASTNode("symbol", "&gt;"), this.currentParent);
-        } else if (nextTok === "<") {
+        } else if (nextTkn === "<") {
           this.tokenizer.advance();
           this.ast.addChild(new ASTNode("symbol", "&lt;"), this.currentParent);
-        } else if (nextTok === "&") {
+        } else if (nextTkn === "&") {
           this.tokenizer.advance();
           this.ast.addChild(new ASTNode("symbol", "&amp;"), this.currentParent);
         } else {
@@ -429,24 +434,24 @@ export default class CompilationEngine {
     this.currentParent = new ASTNode("term");
     this.ast.addChild(this.currentParent, prevParent);
 
-    let nextTok = this.tokenizer.peekNextToken();
-    let nextTokType = this.tokenizer.tokenType(nextTok);
+    let nextTkn = this.tokenizer.peekNextToken();
+    let nextTknType = this.tokenizer.tokenType(nextTkn);
 
     // (
-    if (nextTok === "(") {
+    if (nextTkn === "(") {
       this.addHelper(TokenTypes.SYMBOL); // (
       this.compileExpression();
       this.addHelper(TokenTypes.SYMBOL); // )
     }
 
-    if (nextTokType === TokenTypes.IDENTIFIER) {
+    if (nextTknType === TokenTypes.IDENTIFIER) {
       this.addHelper(TokenTypes.IDENTIFIER);
 
-      nextTok = this.tokenizer.peekNextToken();
-      nextTokType = this.tokenizer.tokenType(nextTok);
+      nextTkn = this.tokenizer.peekNextToken();
+      nextTknType = this.tokenizer.tokenType(nextTkn);
 
       // .
-      if (nextTok === ".") {
+      if (nextTkn === ".") {
         this.addHelper(TokenTypes.SYMBOL); // .
         this.addHelper(TokenTypes.IDENTIFIER); // name after .
         this.addHelper(TokenTypes.SYMBOL); // (
@@ -455,14 +460,14 @@ export default class CompilationEngine {
       }
 
       // [
-      if (nextTok === "[") {
+      if (nextTkn === "[") {
         this.addHelper(TokenTypes.SYMBOL); // [
         this.compileExpression();
         this.addHelper(TokenTypes.SYMBOL); // ]
       }
-    } else if (nextTokType === TokenTypes.INT_CONST) {
+    } else if (nextTknType === TokenTypes.INT_CONST) {
       this.addHelper(TokenTypes.INT_CONST);
-    } else if (nextTokType === TokenTypes.STRING_CONST) {
+    } else if (nextTknType === TokenTypes.STRING_CONST) {
       this.tokenizer.advance();
       this.ast.addChild(
         new ASTNode(
@@ -472,13 +477,13 @@ export default class CompilationEngine {
         this.currentParent
       );
     } else if (
-      nextTok === KeyWordTypes.TRUE ||
-      nextTok === KeyWordTypes.FALSE ||
-      nextTok === KeyWordTypes.NULL ||
-      nextTok === KeyWordTypes.THIS
+      nextTkn === KeyWordTypes.TRUE ||
+      nextTkn === KeyWordTypes.FALSE ||
+      nextTkn === KeyWordTypes.NULL ||
+      nextTkn === KeyWordTypes.THIS
     ) {
       this.addHelper(TokenTypes.KEYWORD);
-    } else if (nextTok === "-" || nextTok === "~") { // unary
+    } else if (nextTkn === "-" || nextTkn === "~") { // unary
       this.addHelper(TokenTypes.SYMBOL); // - or ~
       this.compileTerm();
     }
